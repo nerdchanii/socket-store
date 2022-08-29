@@ -1,3 +1,4 @@
+[![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Fnerdchanii%2Fsocket-store&count_bg=%236D9573&title_bg=%23FFF054&icon=javascript.svg&icon_color=%231E1E1D&title=hits&edge_flat=false)](https://hits.seeyoufarm.com)
 # Socket-Store
 
 it is websocket Store
