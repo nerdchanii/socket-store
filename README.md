@@ -40,7 +40,6 @@ const talkHandler = createMessageHandler<string[], string>(
 
 
 
-
 #### 2-2. Create SocketStore
 
 Next, create a socket store.
@@ -69,9 +68,10 @@ store.getState('talk');
 // ex) [{user:'nerd',message:'hi'}, {user:'chanii',message:'Can you help me? '}, {user: 'nerd', message:'kk'}] 
 
 ```
-<hr/> 
 
-## License
+
+
+## LICENSE
 
 MIT
 
