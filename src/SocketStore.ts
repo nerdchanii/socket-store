@@ -1,17 +1,21 @@
 import { MessageHandler } from "./createMessageHandler";
-import { ISocketStore, Store } from "./types";
+import { ISocketStore, ISocketStoreOptions, Store } from "./types";
 
-class SocketStore implements ISocketStore {
+export class SocketStore implements ISocketStore {
   store = {} as Store;
   listeners: any[];
+  options = {} as ISocketStoreOptions;
   constructor(
     protected socket: WebSocket,
-    messageHandlers: MessageHandler<any, any>[]
+    messageHandlers: Array<MessageHandler<any, any>>,
+    options?: ISocketStoreOptions
   ) {
+    this.options = options || {};
     this.listeners = [];
     this.socket.addEventListener("open", this.onConnect.bind(this));
     this.socket.addEventListener("message", this.onMessage.bind(this));
-    this.socket.addEventListener("close", this.onClose);
+    this.socket.addEventListener("error", this.onError.bind(this));
+    this.socket.addEventListener("close", this.onClose.bind(this));
 
     this.store = messageHandlers.reduce((acc, cur) => {
       const temp = {
@@ -24,7 +28,9 @@ class SocketStore implements ISocketStore {
   }
 
   onConnect() {
-    console.log("socket connected");
+    if (this.options.onConnect) {
+      this.options.onConnect();
+    }
   }
 
   onMessage({ data }: MessageEvent<string>) {
@@ -40,18 +46,18 @@ class SocketStore implements ISocketStore {
   }
 
   onClose = (event: CloseEvent) => {
-    console.log("close", event.code, event.reason);
+    this.options.onClose?.(event);
   };
 
-  onError = (event: ErrorEvent) => {
-    console.log("error", event);
+  onError = (event: Event) => {
+    this.options.onError?.(event);
   };
 
   send = ({ key, data }: { key: string; data: any }) => {
     this.socket.send(JSON.stringify({ key, data }));
   };
 
-  setData = ({ key, state }: { key: string; state: any }) => {
+  private setData = ({ key, state }: { key: string; state: any }) => {
     const newState = this.store[key].callback(this.store[key].state, state);
     this.store[key].state = newState;
   };
@@ -64,7 +70,7 @@ class SocketStore implements ISocketStore {
     this.listeners.push({ key, listener });
   };
 
-  notify = (key: string) => {
+  private notify = (key: string) => {
     this.listeners.forEach((listener) => {
       if (listener.key === key) {
         listener.listener(this.getState(key));
@@ -72,5 +78,3 @@ class SocketStore implements ISocketStore {
     });
   };
 }
-
-export default SocketStore;

@@ -9,10 +9,10 @@ export interface ISocketStore {
   /**
    * method related to the store
    */
-  setData({ key, state }: { key: string; state: any }): void;
+  // setData({ key, state }: { key: string; state: any }): void;
   getState(key: string): any;
   subscribe(key: string, listener: (state: any) => void): void;
-  notify(key: string): void;
+  // notify(key: string): void;
 }
 
 export type Store = {
@@ -21,3 +21,8 @@ export type Store = {
     callback: (state: any, data: any) => void;
   };
 };
+export interface ISocketStoreOptions {
+  onConnect?: () => void;
+  onClose?: (event: CloseEvent) => void;
+  onError?: (event: Event) => void;
+}

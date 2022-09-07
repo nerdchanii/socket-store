@@ -4,18 +4,17 @@ export type MessageHandler<S, D> = {
   state: S;
 };
 
-const createMessageHandler = <S, D>(
+export function createMessageHandler<S = unknown, D = unknown>(
   key: string,
   callback: (state: S, data: D) => S,
   state: S
-): MessageHandler<S, D> => {
+): MessageHandler<S, D> {
   return {
     key,
-    callback(state: S, data: D) {
-      return callback(state, data);
-    },
+    callback,
     state,
   };
 };
 
-export default createMessageHandler;
+
+
