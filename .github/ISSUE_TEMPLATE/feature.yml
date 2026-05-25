@@ -1,0 +1,70 @@
+name: Feature or improvement
+description: Propose a scoped improvement for socket-store.
+title: "[Feature]: "
+labels: ["type:feature"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve socket-store. Keep the issue focused enough that it can be closed by one clear change.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What user or maintainer problem does this solve?
+      placeholder: Describe the current limitation or pain point.
+    validations:
+      required: true
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: What should be true after this is complete?
+      placeholder: Describe the desired behavior or outcome.
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - P0 - Critical
+        - P1 - High
+        - P2 - Medium
+        - P3 - Low
+        - P4 - Backlog
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - api
+        - runtime
+        - testing
+        - docs
+        - tooling
+        - packaging
+        - release
+        - strategy
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: List the concrete checks that make this issue done.
+      placeholder: |
+        - ...
+        - ...
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Links, related backlog files, or implementation notes.
+    validations:
+      required: false
+
