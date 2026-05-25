@@ -69,6 +69,16 @@ describe("SocketStore", () => {
     expect(socket.sent).toEqual([JSON.stringify({ key: "chat", data: "hello" })]);
   });
 
+  it("throws before sending when the socket is not open", () => {
+    const { socket, store } = createStore();
+    socket.readyState = 0;
+
+    expect(() => store.send({ key: "chat", data: "hello" })).toThrow(
+      "WebSocket is not open"
+    );
+    expect(socket.sent).toEqual([]);
+  });
+
   it("returns idempotent unsubscribe functions from subscribe", () => {
     const { socket, store } = createStore();
     const listener = vi.fn();
@@ -123,5 +133,48 @@ describe("SocketStore", () => {
 
     unsubscribeFirst();
     expect(calls).toEqual(["first", "second", "first"]);
+  });
+
+  it("reports malformed input through onMessageError", () => {
+    const onMessageError = vi.fn();
+    const { socket } = createStore({ onMessageError });
+
+    socket.dispatch("message", { data: "{" });
+    socket.dispatch("message", { data: JSON.stringify({ data: "missing key" }) });
+    socket.dispatch("message", { data: new Uint8Array() });
+
+    expect(onMessageError).toHaveBeenCalledTimes(3);
+    expect(onMessageError.mock.calls.map((call) => call[1].reason)).toEqual([
+      "invalid-json",
+      "malformed-envelope",
+      "non-string-message",
+    ]);
+  });
+
+  it("routes unknown topic envelopes through onUnknownMessage", () => {
+    const onUnknownMessage = vi.fn();
+    const { socket, store } = createStore({ onUnknownMessage });
+
+    socket.dispatch("message", {
+      data: JSON.stringify({ key: "unknown", data: "ignored" }),
+    });
+
+    expect(onUnknownMessage).toHaveBeenCalledWith({
+      key: "unknown",
+      data: "ignored",
+    });
+    expect(store.getState("chat")).toEqual([]);
+  });
+
+  it("fails early for duplicate handler keys", () => {
+    const socket = new FakeWebSocket();
+
+    expect(
+      () =>
+        new SocketStore(socket as unknown as WebSocket, [
+          createMessageHandler("chat", (state: string[], data: string) => [...state, data], []),
+          createMessageHandler("chat", (state: string[], data: string) => [...state, data], []),
+        ])
+    ).toThrow("Duplicate socket-store handler key: chat");
   });
 });
