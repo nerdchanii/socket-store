@@ -1,13 +1,25 @@
 import { MessageHandler } from "./createMessageHandler";
-import { ISocketStore, ISocketStoreOptions, Store } from "./types";
+import {
+  DefaultSchema,
+  ISocketStore,
+  ISocketStoreOptions,
+  SocketSchema,
+  SocketStoreMessageHandlers,
+  Store,
+  TopicKey,
+  TopicPayload,
+  TopicState,
+} from "./types";
 
-export class SocketStore implements ISocketStore {
+export class SocketStore<Schema extends SocketSchema = DefaultSchema>
+  implements ISocketStore<Schema>
+{
   store = {} as Store;
   listeners: any[];
   options = {} as ISocketStoreOptions;
   constructor(
     protected socket: WebSocket,
-    messageHandlers: Array<MessageHandler<any, any>>,
+    messageHandlers: SocketStoreMessageHandlers<Schema>,
     options?: ISocketStoreOptions
   ) {
     this.options = options || {};
@@ -17,7 +29,8 @@ export class SocketStore implements ISocketStore {
     this.socket.addEventListener("error", this.onError.bind(this));
     this.socket.addEventListener("close", this.onClose.bind(this));
 
-    this.store = messageHandlers.reduce((acc, cur) => {
+    const handlers = messageHandlers as Array<MessageHandler<any, any>>;
+    this.store = handlers.reduce((acc, cur) => {
       const temp = {
         state: cur.state,
         callback: cur.callback,
@@ -53,7 +66,7 @@ export class SocketStore implements ISocketStore {
     this.options.onError?.(event);
   };
 
-  send = ({ key, data }: { key: string; data: any }) => {
+  send = <K extends TopicKey<Schema>>({ key, data }: { key: K; data: TopicPayload<Schema, K> }) => {
     this.socket.send(JSON.stringify({ key, data }));
   };
 
@@ -62,18 +75,21 @@ export class SocketStore implements ISocketStore {
     this.store[key].state = newState;
   };
 
-  getState = (key: string) => {
-    return this.store[key].state;
+  getState = <K extends TopicKey<Schema>>(key: K): TopicState<Schema, K> => {
+    return this.store[key as string].state;
   };
 
-  subscribe = (key: string, listener: (state: any) => void) => {
+  subscribe = <K extends TopicKey<Schema>>(
+    key: K,
+    listener: (state: TopicState<Schema, K>) => void
+  ) => {
     this.listeners.push({ key, listener });
   };
 
   private notify = (key: string) => {
     this.listeners.forEach((listener) => {
       if (listener.key === key) {
-        listener.listener(this.getState(key));
+        listener.listener(this.getState(key as TopicKey<Schema>));
       }
     });
   };
