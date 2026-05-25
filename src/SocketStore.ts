@@ -26,6 +26,13 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
   store = {} as Store;
   listeners: StoreListener[];
   options = {} as ISocketStoreOptions;
+  private disposed = false;
+  private readonly handleOpen = () => this.onConnect();
+  private readonly handleMessage = (event: MessageEvent<string>) =>
+    this.onMessage(event);
+  private readonly handleError = (event: Event) => this.onError(event);
+  private readonly handleClose = (event: CloseEvent) => this.onClose(event);
+
   constructor(
     protected socket: WebSocket,
     messageHandlers: SocketStoreMessageHandlers<Schema>,
@@ -33,10 +40,10 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
   ) {
     this.options = options || {};
     this.listeners = [];
-    this.socket.addEventListener("open", this.onConnect.bind(this));
-    this.socket.addEventListener("message", this.onMessage.bind(this));
-    this.socket.addEventListener("error", this.onError.bind(this));
-    this.socket.addEventListener("close", this.onClose.bind(this));
+    this.socket.addEventListener("open", this.handleOpen);
+    this.socket.addEventListener("message", this.handleMessage);
+    this.socket.addEventListener("error", this.handleError);
+    this.socket.addEventListener("close", this.handleClose);
 
     const handlers = messageHandlers as Array<MessageHandler<any, any>>;
     this.store = handlers.reduce((acc, cur) => {
@@ -54,12 +61,20 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
   }
 
   onConnect() {
+    if (this.disposed) {
+      return;
+    }
+
     if (this.options.onConnect) {
       this.options.onConnect();
     }
   }
 
   onMessage({ data }: MessageEvent<string>) {
+    if (this.disposed) {
+      return;
+    }
+
     if (typeof data !== "string") {
       this.reportMessageError(
         new Error("socket-store only supports string messages"),
@@ -110,14 +125,24 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
   }
 
   onClose = (event: CloseEvent) => {
+    if (this.disposed) {
+      return;
+    }
+
     this.options.onClose?.(event);
   };
 
   onError = (event: Event) => {
+    if (this.disposed) {
+      return;
+    }
+
     this.options.onError?.(event);
   };
 
   send = <K extends TopicKey<Schema>>({ key, data }: { key: K; data: TopicPayload<Schema, K> }) => {
+    this.assertActive("send");
+
     if (this.socket.readyState !== OPEN_READY_STATE) {
       throw new Error("Cannot send because the WebSocket is not open");
     }
@@ -142,6 +167,8 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
     key: K,
     listener: (state: TopicState<Schema, K>) => void
   ): Unsubscribe => {
+    this.assertActive("subscribe");
+
     const entry = { key, listener };
     this.listeners.push(entry);
 
@@ -164,6 +191,25 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
       }
     });
   };
+
+  dispose = () => {
+    if (this.disposed) {
+      return;
+    }
+
+    this.disposed = true;
+    this.listeners = [];
+    this.socket.removeEventListener("open", this.handleOpen);
+    this.socket.removeEventListener("message", this.handleMessage);
+    this.socket.removeEventListener("error", this.handleError);
+    this.socket.removeEventListener("close", this.handleClose);
+  };
+
+  private assertActive(action: "send" | "subscribe") {
+    if (this.disposed) {
+      throw new Error(`Cannot ${action} after SocketStore has been disposed`);
+    }
+  }
 
   private isEnvelope(value: unknown): value is SocketStoreEnvelope {
     if (value === null || typeof value !== "object") {
