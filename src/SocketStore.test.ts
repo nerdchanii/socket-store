@@ -198,12 +198,17 @@ describe("SocketStore", () => {
     const socket = new FakeWebSocket();
     const store = new SocketStore(socket as unknown as WebSocket, [
       createMessageHandler("toString", (state: string[], data: string) => [...state, data], []),
+      createMessageHandler("__proto__", (state: string[], data: string) => [...state, data], []),
     ]);
 
     socket.dispatch("message", {
       data: JSON.stringify({ key: "toString", data: "hello" }),
     });
+    socket.dispatch("message", {
+      data: JSON.stringify({ key: "__proto__", data: "safe" }),
+    });
 
     expect(store.getState("toString")).toEqual(["hello"]);
+    expect(store.getState("__proto__")).toEqual(["safe"]);
   });
 });
