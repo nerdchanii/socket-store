@@ -50,7 +50,7 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
       };
       acc[cur.key] = temp;
       return acc;
-    }, {} as Store);
+    }, Object.create(null) as Store);
   }
 
   onConnect() {
