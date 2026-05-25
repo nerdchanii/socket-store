@@ -13,6 +13,8 @@ import type {
   TopicState,
   TopicPayload,
   TopicHandler,
+  SchemaMessageHandler,
+  SocketStoreMessageHandlers,
   SendMessage,
   MessageHandler,
 } from "./index";
@@ -94,13 +96,37 @@ const _badPriceHandler: PriceHandler = {
 // 4. createMessageHandler return type
 // ---------------------------------------------------------------------------
 
-const chatHandler = createMessageHandler<Message[], Message>(
+const chatHandler = createMessageHandler(
   "chat",
-  (state, payload) => [...state, payload],
-  []
+  (state: Message[], payload: Message) => [...state, payload],
+  [] as Message[]
+);
+const priceStoreHandler = createMessageHandler(
+  "price",
+  (_state: Price, payload: PriceTick) => payload.value,
+  null as Price
 );
 // The returned callback must return S (Message[])
 const _chatCb: (state: Message[], data: Message) => Message[] = chatHandler.callback;
+
+const _schemaHandler: SchemaMessageHandler<AppSchema> = chatHandler;
+// @ts-expect-error — handler key must exist in AppSchema
+const _unknownSchemaHandler: SchemaMessageHandler<AppSchema> = createMessageHandler(
+  "unknown",
+  (state: number, payload: number) => state + payload,
+  0
+);
+// @ts-expect-error — "chat" handler state must be Message[], not string
+const _badSchemaHandler: SchemaMessageHandler<AppSchema> = createMessageHandler(
+  "chat",
+  (state: string, payload: Message) => state + payload.text,
+  ""
+);
+
+const _schemaHandlers: SocketStoreMessageHandlers<AppSchema> = [
+  chatHandler,
+  priceStoreHandler,
+];
 
 // ---------------------------------------------------------------------------
 // 5. Typed SocketStore
@@ -109,7 +135,11 @@ const _chatCb: (state: Message[], data: Message) => Message[] = chatHandler.call
 declare const ws: WebSocket;
 
 // Instantiate with schema
-const store = new SocketStore<AppSchema>(ws, [chatHandler]);
+const store = new SocketStore<AppSchema>(ws, [chatHandler, priceStoreHandler]);
+new SocketStore<AppSchema>(ws, [
+  // @ts-expect-error — constructor handlers must match the schema topic contract
+  createMessageHandler("chat", (state: string, payload: Message) => state + payload.text, ""),
+]);
 
 // getState — return type is inferred from the schema
 const chatMessages: Message[] = store.getState("chat");

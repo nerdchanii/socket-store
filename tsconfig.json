@@ -17,5 +17,5 @@
     "skipLibCheck": true,
   },
   "incude": ["src"],
-  "exclude": ["node_modules", "example", "src/**/*.test-d.ts"]
+  "exclude": ["node_modules", "example", "dist", "src/**/*.test-d.ts"]
 }

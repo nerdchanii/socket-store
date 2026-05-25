@@ -7,6 +7,8 @@ export type {
   TopicState,
   TopicPayload,
   TopicHandler,
+  SchemaMessageHandler,
+  SocketStoreMessageHandlers,
   SendMessage,
   DefaultSchema,
   ISocketStore,

@@ -1,3 +1,5 @@
+import type { MessageHandler } from "./createMessageHandler";
+
 // ===== Schema-based types =====
 
 /**
@@ -40,6 +42,21 @@ export type TopicHandler<
   Schema extends SocketSchema,
   K extends TopicKey<Schema>
 > = (state: TopicState<Schema, K>, payload: TopicPayload<Schema, K>) => TopicState<Schema, K>;
+
+/** MessageHandler union constrained to the state and payload of each schema topic. */
+export type SchemaMessageHandler<Schema extends SocketSchema> = {
+  [K in TopicKey<Schema>]: MessageHandler<
+    TopicState<Schema, K>,
+    TopicPayload<Schema, K>,
+    K
+  >;
+}[TopicKey<Schema>];
+
+/** Constructor handler list: loose by default, schema-constrained for finite schemas. */
+export type SocketStoreMessageHandlers<Schema extends SocketSchema> =
+  string extends TopicKey<Schema>
+    ? Array<MessageHandler<any, any>>
+    : Array<SchemaMessageHandler<Schema>>;
 
 /** Typed `send` signature derived from a schema. */
 export type SendMessage<Schema extends SocketSchema> = <K extends TopicKey<Schema>>(msg: {

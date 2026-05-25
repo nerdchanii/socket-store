@@ -4,6 +4,7 @@ import {
   ISocketStore,
   ISocketStoreOptions,
   SocketSchema,
+  SocketStoreMessageHandlers,
   Store,
   TopicKey,
   TopicPayload,
@@ -18,7 +19,7 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
   options = {} as ISocketStoreOptions;
   constructor(
     protected socket: WebSocket,
-    messageHandlers: Array<MessageHandler<any, any>>,
+    messageHandlers: SocketStoreMessageHandlers<Schema>,
     options?: ISocketStoreOptions
   ) {
     this.options = options || {};
@@ -28,7 +29,8 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
     this.socket.addEventListener("error", this.onError.bind(this));
     this.socket.addEventListener("close", this.onClose.bind(this));
 
-    this.store = messageHandlers.reduce((acc, cur) => {
+    const handlers = messageHandlers as Array<MessageHandler<any, any>>;
+    this.store = handlers.reduce((acc, cur) => {
       const temp = {
         state: cur.state,
         callback: cur.callback,
