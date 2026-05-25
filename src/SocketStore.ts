@@ -9,13 +9,19 @@ import {
   TopicKey,
   TopicPayload,
   TopicState,
+  Unsubscribe,
 } from "./types";
+
+type StoreListener = {
+  key: string;
+  listener: (state: any) => void;
+};
 
 export class SocketStore<Schema extends SocketSchema = DefaultSchema>
   implements ISocketStore<Schema>
 {
   store = {} as Store;
-  listeners: any[];
+  listeners: StoreListener[];
   options = {} as ISocketStoreOptions;
   constructor(
     protected socket: WebSocket,
@@ -82,12 +88,24 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
   subscribe = <K extends TopicKey<Schema>>(
     key: K,
     listener: (state: TopicState<Schema, K>) => void
-  ) => {
-    this.listeners.push({ key, listener });
+  ): Unsubscribe => {
+    const entry = { key, listener };
+    this.listeners.push(entry);
+
+    let subscribed = true;
+    return () => {
+      if (!subscribed) {
+        return;
+      }
+
+      subscribed = false;
+      this.listeners = this.listeners.filter((current) => current !== entry);
+    };
   };
 
   private notify = (key: string) => {
-    this.listeners.forEach((listener) => {
+    const snapshot = [...this.listeners];
+    snapshot.forEach((listener) => {
       if (listener.key === key) {
         listener.listener(this.getState(key as TopicKey<Schema>));
       }

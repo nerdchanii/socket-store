@@ -10,6 +10,7 @@ export type {
   SchemaMessageHandler,
   SocketStoreMessageHandlers,
   SendMessage,
+  Unsubscribe,
   DefaultSchema,
   ISocketStore,
   ISocketStoreOptions,
