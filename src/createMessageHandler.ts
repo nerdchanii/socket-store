@@ -1,6 +1,6 @@
 export type MessageHandler<S, D> = {
   key: string;
-  callback: (state: S, data: D) => void;
+  callback: (state: S, data: D) => S;
   state: S;
 };
 
