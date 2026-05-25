@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "rootDir": "src",
     "outDir": "dist/esm",
     "target": "es6" /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */,
     "lib": [
@@ -16,5 +17,5 @@
     "skipLibCheck": true,
   },
   "incude": ["src"],
-  "exclude": ["node_modules", "example"]
+  "exclude": ["node_modules", "example", "src/**/*.test-d.ts"]
 }
