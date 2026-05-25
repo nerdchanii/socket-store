@@ -40,7 +40,7 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
 
     const handlers = messageHandlers as Array<MessageHandler<any, any>>;
     this.store = handlers.reduce((acc, cur) => {
-      if (acc[cur.key]) {
+      if (Object.prototype.hasOwnProperty.call(acc, cur.key)) {
         throw new Error(`Duplicate socket-store handler key: ${cur.key}`);
       }
 
@@ -90,7 +90,7 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
       return;
     }
 
-    if (!this.store[payload.key]) {
+    if (!this.hasHandler(payload.key)) {
       this.options.onUnknownMessage?.(payload);
       return;
     }
@@ -129,6 +129,10 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
     const newState = this.store[key].callback(this.store[key].state, state);
     this.store[key].state = newState;
   };
+
+  private hasHandler(key: string) {
+    return Object.prototype.hasOwnProperty.call(this.store, key);
+  }
 
   getState = <K extends TopicKey<Schema>>(key: K): TopicState<Schema, K> => {
     return this.store[key as string].state;

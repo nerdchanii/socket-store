@@ -166,6 +166,22 @@ describe("SocketStore", () => {
     expect(store.getState("chat")).toEqual([]);
   });
 
+  it("routes prototype property keys as unknown topics", () => {
+    const onMessageError = vi.fn();
+    const onUnknownMessage = vi.fn();
+    const { socket } = createStore({ onMessageError, onUnknownMessage });
+
+    socket.dispatch("message", {
+      data: JSON.stringify({ key: "toString", data: "ignored" }),
+    });
+
+    expect(onUnknownMessage).toHaveBeenCalledWith({
+      key: "toString",
+      data: "ignored",
+    });
+    expect(onMessageError).not.toHaveBeenCalled();
+  });
+
   it("fails early for duplicate handler keys", () => {
     const socket = new FakeWebSocket();
 
@@ -176,5 +192,18 @@ describe("SocketStore", () => {
           createMessageHandler("chat", (state: string[], data: string) => [...state, data], []),
         ])
     ).toThrow("Duplicate socket-store handler key: chat");
+  });
+
+  it("allows prototype property names as first-time handler keys", () => {
+    const socket = new FakeWebSocket();
+    const store = new SocketStore(socket as unknown as WebSocket, [
+      createMessageHandler("toString", (state: string[], data: string) => [...state, data], []),
+    ]);
+
+    socket.dispatch("message", {
+      data: JSON.stringify({ key: "toString", data: "hello" }),
+    });
+
+    expect(store.getState("toString")).toEqual(["hello"]);
   });
 });
