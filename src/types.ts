@@ -67,6 +67,18 @@ export type SendMessage<Schema extends SocketSchema> = <K extends TopicKey<Schem
 /** Removes a subscription. Safe to call more than once. */
 export type Unsubscribe = () => void;
 
+/** JSON string envelope supported by the v1 default protocol. */
+export type SocketStoreEnvelope = {
+  key: string;
+  data: unknown;
+};
+
+export type SocketStoreMessageErrorReason =
+  | "non-string-message"
+  | "invalid-json"
+  | "malformed-envelope"
+  | "handler-error";
+
 // ===== Fallback type for non-schema usage =====
 
 /** @internal Default schema used when no explicit schema is provided. */
@@ -103,4 +115,12 @@ export interface ISocketStoreOptions {
   onConnect?: () => void;
   onClose?: (event: CloseEvent) => void;
   onError?: (event: Event) => void;
+  onMessageError?: (
+    error: Error,
+    context: {
+      reason: SocketStoreMessageErrorReason;
+      data: unknown;
+    }
+  ) => void;
+  onUnknownMessage?: (message: SocketStoreEnvelope) => void;
 }

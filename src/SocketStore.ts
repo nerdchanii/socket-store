@@ -4,6 +4,7 @@ import {
   ISocketStore,
   ISocketStoreOptions,
   SocketSchema,
+  SocketStoreEnvelope,
   SocketStoreMessageHandlers,
   Store,
   TopicKey,
@@ -16,6 +17,8 @@ type StoreListener = {
   key: string;
   listener: (state: any) => void;
 };
+
+const OPEN_READY_STATE = 1;
 
 export class SocketStore<Schema extends SocketSchema = DefaultSchema>
   implements ISocketStore<Schema>
@@ -37,6 +40,10 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
 
     const handlers = messageHandlers as Array<MessageHandler<any, any>>;
     this.store = handlers.reduce((acc, cur) => {
+      if (acc[cur.key]) {
+        throw new Error(`Duplicate socket-store handler key: ${cur.key}`);
+      }
+
       const temp = {
         state: cur.state,
         callback: cur.callback,
@@ -53,15 +60,53 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
   }
 
   onMessage({ data }: MessageEvent<string>) {
-    if (typeof data === "string") {
-      const payload = JSON.parse(data);
-      this.setData({ key: payload.key, state: payload.data });
-      this.notify(payload.key);
-    } else {
-      throw new Error(
-        "data is not a string\n data: " + data + "\n typeof data " + typeof data
+    if (typeof data !== "string") {
+      this.reportMessageError(
+        new Error("socket-store only supports string messages"),
+        "non-string-message",
+        data
       );
+      return;
     }
+
+    let payload: unknown;
+    try {
+      payload = JSON.parse(data);
+    } catch (error) {
+      this.reportMessageError(
+        error instanceof Error ? error : new Error(String(error)),
+        "invalid-json",
+        data
+      );
+      return;
+    }
+
+    if (!this.isEnvelope(payload)) {
+      this.reportMessageError(
+        new Error("SocketStore message must be a JSON object with a string key"),
+        "malformed-envelope",
+        payload
+      );
+      return;
+    }
+
+    if (!this.store[payload.key]) {
+      this.options.onUnknownMessage?.(payload);
+      return;
+    }
+
+    try {
+      this.setData({ key: payload.key, state: payload.data });
+    } catch (error) {
+      this.reportMessageError(
+        error instanceof Error ? error : new Error(String(error)),
+        "handler-error",
+        payload
+      );
+      return;
+    }
+
+    this.notify(payload.key);
   }
 
   onClose = (event: CloseEvent) => {
@@ -73,6 +118,10 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
   };
 
   send = <K extends TopicKey<Schema>>({ key, data }: { key: K; data: TopicPayload<Schema, K> }) => {
+    if (this.socket.readyState !== OPEN_READY_STATE) {
+      throw new Error("Cannot send because the WebSocket is not open");
+    }
+
     this.socket.send(JSON.stringify({ key, data }));
   };
 
@@ -111,4 +160,20 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
       }
     });
   };
+
+  private isEnvelope(value: unknown): value is SocketStoreEnvelope {
+    if (value === null || typeof value !== "object") {
+      return false;
+    }
+
+    return typeof (value as { key?: unknown }).key === "string";
+  }
+
+  private reportMessageError(
+    error: Error,
+    reason: Parameters<NonNullable<ISocketStoreOptions["onMessageError"]>>[1]["reason"],
+    data: unknown
+  ) {
+    this.options.onMessageError?.(error, { reason, data });
+  }
 }
