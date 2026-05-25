@@ -5,6 +5,13 @@
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
   "types": "./dist/esm/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/esm/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js"
+    }
+  },
   "files": [
     "dist/*"
   ],
@@ -16,8 +23,12 @@
     "build": "npm run build:esm && npm run build:cjs",
     "build:esm": "tsc",
     "build:cjs": "tsc --module commonjs --outDir dist/cjs",
+    "typecheck": "tsc --noEmit",
     "type-test": "tsc -p tsconfig.test-d.json",
-    "test": "vitest run"
+    "test": "vitest run",
+    "lint": "npm run typecheck",
+    "pack:dry-run": "npm pack --dry-run",
+    "prepack": "npm run typecheck && npm run type-test && npm run test && npm run build"
   },
   "repository": {
     "type": "git",
@@ -37,8 +48,8 @@
   "author": "nerdchanii <nerdchanii@gmail.com>",
   "license": "MIT",
   "devDependencies": {
-    "typescript": "^4.8.2",
-    "vite": "^3.0.9",
-    "vitest": "^1.6.1"
+    "typescript": "^5.9.3",
+    "vite": "^8.0.14",
+    "vitest": "^4.1.7"
   }
 }
