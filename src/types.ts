@@ -137,6 +137,7 @@ export interface ISocketStore<Schema extends SocketSchema = DefaultSchema> {
     key: K,
     listener: (state: TopicState<Schema, K>) => void
   ): Unsubscribe;
+  dispose(): void;
 }
 
 export type Store = {
