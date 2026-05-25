@@ -280,4 +280,43 @@ describe("SocketStore", () => {
     expect(store.getState("toString")).toEqual(["hello"]);
     expect(store.getState("__proto__")).toEqual(["safe"]);
   });
+
+  it("removes native listeners and clears subscriptions on dispose", () => {
+    const listener = vi.fn();
+    const onConnect = vi.fn();
+    const { socket, store } = createStore({ onConnect });
+
+    store.subscribe("chat", listener);
+    expect(socket.listenerCount("open")).toBe(1);
+    expect(socket.listenerCount("message")).toBe(1);
+
+    store.dispose();
+    store.dispose();
+
+    expect(socket.listenerCount("open")).toBe(0);
+    expect(socket.listenerCount("message")).toBe(0);
+
+    socket.dispatch("open");
+    socket.dispatch("message", {
+      data: JSON.stringify({ key: "chat", data: "ignored" }),
+    });
+
+    expect(onConnect).not.toHaveBeenCalled();
+    expect(listener).not.toHaveBeenCalled();
+    expect(store.getState("chat")).toEqual([]);
+  });
+
+  it("rejects new subscriptions and sends after disposal but preserves readable snapshots", () => {
+    const { store } = createStore();
+
+    store.dispose();
+
+    expect(store.getState("chat")).toEqual([]);
+    expect(() => store.subscribe("chat", () => undefined)).toThrow(
+      "Cannot subscribe after SocketStore has been disposed"
+    );
+    expect(() => store.send({ key: "chat", data: "hello" })).toThrow(
+      "Cannot send after SocketStore has been disposed"
+    );
+  });
 });
