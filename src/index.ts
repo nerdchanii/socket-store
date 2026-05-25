@@ -11,6 +11,8 @@ export type {
   SocketStoreMessageHandlers,
   SendMessage,
   Unsubscribe,
+  SocketStoreEnvelope,
+  SocketStoreMessageErrorReason,
   DefaultSchema,
   ISocketStore,
   ISocketStoreOptions,
