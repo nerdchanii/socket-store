@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { createMessageHandler, SocketStore } from "./index";
+import { createMessageHandler, SocketStore, SocketStoreError } from "./index";
 
 type Listener = (event: any) => void;
 
@@ -69,13 +69,24 @@ describe("SocketStore", () => {
     expect(socket.sent).toEqual([JSON.stringify({ key: "chat", data: "hello" })]);
   });
 
-  it("throws before sending when the socket is not open", () => {
+  it("throws a SocketStoreError before sending when the socket is not open", () => {
     const { socket, store } = createStore();
     socket.readyState = 0;
 
-    expect(() => store.send({ key: "chat", data: "hello" })).toThrow(
-      "WebSocket is not open"
-    );
+    let error: unknown;
+    try {
+      store.send({ key: "chat", data: "hello" });
+    } catch (caught) {
+      error = caught;
+    }
+
+    expect(error).toBeInstanceOf(SocketStoreError);
+    expect((error as SocketStoreError).code).toBe("ERR_SOCKET_NOT_OPEN");
+    expect((error as SocketStoreError).context).toMatchObject({
+      phase: "send",
+      key: "chat",
+      data: "hello",
+    });
     expect(socket.sent).toEqual([]);
   });
 
@@ -135,51 +146,84 @@ describe("SocketStore", () => {
     expect(calls).toEqual(["first", "second", "first"]);
   });
 
-  it("reports malformed input through onMessageError", () => {
-    const onMessageError = vi.fn();
-    const { socket } = createStore({ onMessageError });
+  it("reports malformed input through onError", () => {
+    const onError = vi.fn();
+    const { socket } = createStore({ onError });
 
     socket.dispatch("message", { data: "{" });
     socket.dispatch("message", { data: JSON.stringify({ data: "missing key" }) });
     socket.dispatch("message", { data: new Uint8Array() });
 
-    expect(onMessageError).toHaveBeenCalledTimes(3);
-    expect(onMessageError.mock.calls.map((call) => call[1].reason)).toEqual([
-      "invalid-json",
-      "malformed-envelope",
-      "non-string-message",
+    expect(onError).toHaveBeenCalledTimes(3);
+    expect(onError.mock.calls.map((call) => call[0].code)).toEqual([
+      "ERR_INVALID_JSON",
+      "ERR_MALFORMED_ENVELOPE",
+      "ERR_UNSUPPORTED_MESSAGE_DATA",
     ]);
+    expect(onError.mock.calls.every((call) => call[0] instanceof SocketStoreError)).toBe(true);
   });
 
-  it("routes unknown topic envelopes through onUnknownMessage", () => {
-    const onUnknownMessage = vi.fn();
-    const { socket, store } = createStore({ onUnknownMessage });
+  it("reports unknown topic envelopes through onError", () => {
+    const onError = vi.fn();
+    const { socket, store } = createStore({ onError });
 
     socket.dispatch("message", {
       data: JSON.stringify({ key: "unknown", data: "ignored" }),
     });
 
-    expect(onUnknownMessage).toHaveBeenCalledWith({
-      key: "unknown",
-      data: "ignored",
+    expect(onError).toHaveBeenCalledWith(expect.any(SocketStoreError));
+    expect(onError.mock.calls[0][0]).toMatchObject({
+      code: "ERR_UNKNOWN_TOPIC",
+      context: {
+        phase: "route",
+        key: "unknown",
+        data: { key: "unknown", data: "ignored" },
+      },
     });
     expect(store.getState("chat")).toEqual([]);
   });
 
   it("routes prototype property keys as unknown topics", () => {
-    const onMessageError = vi.fn();
-    const onUnknownMessage = vi.fn();
-    const { socket } = createStore({ onMessageError, onUnknownMessage });
+    const onError = vi.fn();
+    const { socket } = createStore({ onError });
 
     socket.dispatch("message", {
       data: JSON.stringify({ key: "toString", data: "ignored" }),
     });
 
-    expect(onUnknownMessage).toHaveBeenCalledWith({
-      key: "toString",
-      data: "ignored",
+    expect(onError).toHaveBeenCalledWith(expect.any(SocketStoreError));
+    expect(onError.mock.calls[0][0]).toMatchObject({
+      code: "ERR_UNKNOWN_TOPIC",
+      context: {
+        phase: "route",
+        key: "toString",
+      },
     });
-    expect(onMessageError).not.toHaveBeenCalled();
+  });
+
+  it("wraps native WebSocket error events in SocketStoreError", () => {
+    const onError = vi.fn();
+    const { socket } = createStore({ onError });
+    const event = new Event("error");
+
+    socket.dispatch("error", event);
+
+    expect(onError).toHaveBeenCalledWith(expect.any(SocketStoreError));
+    expect(onError.mock.calls[0][0]).toMatchObject({
+      code: "ERR_SOCKET_ERROR",
+      context: {
+        phase: "socket",
+        event,
+      },
+    });
+  });
+
+  it("throws async message errors when onError is not provided", () => {
+    const { socket } = createStore();
+
+    expect(() => {
+      socket.dispatch("message", { data: "{" });
+    }).toThrow(SocketStoreError);
   });
 
   it("fails early for duplicate handler keys", () => {

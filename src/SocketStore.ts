@@ -4,6 +4,7 @@ import {
   ISocketStore,
   ISocketStoreOptions,
   SocketSchema,
+  SocketStoreError,
   SocketStoreEnvelope,
   SocketStoreMessageHandlers,
   Store,
@@ -61,10 +62,12 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
 
   onMessage({ data }: MessageEvent<string>) {
     if (typeof data !== "string") {
-      this.reportMessageError(
-        new Error("socket-store only supports string messages"),
-        "non-string-message",
-        data
+      this.emitError(
+        new SocketStoreError(
+          "ERR_UNSUPPORTED_MESSAGE_DATA",
+          "socket-store default protocol only supports string message data",
+          { phase: "parse", data }
+        )
       );
       return;
     }
@@ -73,35 +76,52 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
     try {
       payload = JSON.parse(data);
     } catch (error) {
-      this.reportMessageError(
-        error instanceof Error ? error : new Error(String(error)),
-        "invalid-json",
-        data
+      this.emitError(
+        new SocketStoreError("ERR_INVALID_JSON", "Invalid JSON message", {
+          phase: "parse",
+          data,
+          cause: error,
+        })
       );
       return;
     }
 
     if (!this.isEnvelope(payload)) {
-      this.reportMessageError(
-        new Error("SocketStore message must be a JSON object with a string key"),
-        "malformed-envelope",
-        payload
+      this.emitError(
+        new SocketStoreError(
+          "ERR_MALFORMED_ENVELOPE",
+          "SocketStore message must be a JSON object with a string key",
+          { phase: "validate", data: payload }
+        )
       );
       return;
     }
 
     if (!this.hasHandler(payload.key)) {
-      this.options.onUnknownMessage?.(payload);
+      this.emitError(
+        new SocketStoreError(
+          "ERR_UNKNOWN_TOPIC",
+          `No socket-store handler registered for topic: ${payload.key}`,
+          { phase: "route", key: payload.key, data: payload }
+        )
+      );
       return;
     }
 
     try {
       this.setData({ key: payload.key, state: payload.data });
     } catch (error) {
-      this.reportMessageError(
-        error instanceof Error ? error : new Error(String(error)),
-        "handler-error",
-        payload
+      this.emitError(
+        new SocketStoreError(
+          "ERR_HANDLER_FAILED",
+          `SocketStore handler failed for topic: ${payload.key}`,
+          {
+            phase: "handle",
+            key: payload.key,
+            data: payload,
+            cause: error,
+          }
+        )
       );
       return;
     }
@@ -114,12 +134,21 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
   };
 
   onError = (event: Event) => {
-    this.options.onError?.(event);
+    this.emitError(
+      new SocketStoreError("ERR_SOCKET_ERROR", "WebSocket error", {
+        phase: "socket",
+        event,
+      })
+    );
   };
 
   send = <K extends TopicKey<Schema>>({ key, data }: { key: K; data: TopicPayload<Schema, K> }) => {
     if (this.socket.readyState !== OPEN_READY_STATE) {
-      throw new Error("Cannot send because the WebSocket is not open");
+      throw new SocketStoreError(
+        "ERR_SOCKET_NOT_OPEN",
+        "Cannot send because the WebSocket is not open",
+        { phase: "send", key, data }
+      );
     }
 
     this.socket.send(JSON.stringify({ key, data }));
@@ -173,11 +202,12 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
     return typeof (value as { key?: unknown }).key === "string";
   }
 
-  private reportMessageError(
-    error: Error,
-    reason: Parameters<NonNullable<ISocketStoreOptions["onMessageError"]>>[1]["reason"],
-    data: unknown
-  ) {
-    this.options.onMessageError?.(error, { reason, data });
+  private emitError(error: SocketStoreError) {
+    if (this.options.onError) {
+      this.options.onError(error);
+      return;
+    }
+
+    throw error;
   }
 }
