@@ -73,11 +73,46 @@ export type SocketStoreEnvelope = {
   data: unknown;
 };
 
-export type SocketStoreMessageErrorReason =
-  | "non-string-message"
-  | "invalid-json"
-  | "malformed-envelope"
-  | "handler-error";
+export type SocketStoreErrorCode =
+  | "ERR_SOCKET_ERROR"
+  | "ERR_UNSUPPORTED_MESSAGE_DATA"
+  | "ERR_INVALID_JSON"
+  | "ERR_MALFORMED_ENVELOPE"
+  | "ERR_UNKNOWN_TOPIC"
+  | "ERR_HANDLER_FAILED"
+  | "ERR_SOCKET_NOT_OPEN";
+
+export type SocketStoreErrorPhase =
+  | "socket"
+  | "parse"
+  | "validate"
+  | "route"
+  | "handle"
+  | "send";
+
+export type SocketStoreErrorContext = {
+  phase: SocketStoreErrorPhase;
+  key?: string;
+  data?: unknown;
+  event?: Event;
+  cause?: unknown;
+};
+
+export class SocketStoreError extends Error {
+  name = "SocketStoreError";
+  code: SocketStoreErrorCode;
+  context: SocketStoreErrorContext;
+
+  constructor(
+    code: SocketStoreErrorCode,
+    message: string,
+    context: SocketStoreErrorContext
+  ) {
+    super(message);
+    this.code = code;
+    this.context = context;
+  }
+}
 
 // ===== Fallback type for non-schema usage =====
 
@@ -114,13 +149,5 @@ export type Store = {
 export interface ISocketStoreOptions {
   onConnect?: () => void;
   onClose?: (event: CloseEvent) => void;
-  onError?: (event: Event) => void;
-  onMessageError?: (
-    error: Error,
-    context: {
-      reason: SocketStoreMessageErrorReason;
-      data: unknown;
-    }
-  ) => void;
-  onUnknownMessage?: (message: SocketStoreEnvelope) => void;
+  onError?: (error: SocketStoreError) => void;
 }
