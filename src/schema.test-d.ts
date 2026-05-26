@@ -16,6 +16,7 @@ import type {
   SchemaMessageHandler,
   SocketStoreMessageHandlers,
   SendMessage,
+  TopicUpdate,
   Unsubscribe,
   MessageHandler,
 } from "./index";
@@ -154,6 +155,40 @@ const unsubscribe: Unsubscribe = store.subscribe("chat", (msgs: Message[]) => {
 unsubscribe();
 // @ts-expect-error — listener receives Message[], not string[]
 store.subscribe("chat", (_msgs: string[]) => {});
+
+store.subscribeAll((update) => {
+  const _key: "chat" | "price" = update.key;
+
+  if (update.key === "chat") {
+    const _chatState: Message[] = update.state;
+    const _chatData: Message = update.data;
+  } else {
+    const _priceState: Price = update.state;
+    const _priceData: PriceTick = update.data;
+  }
+});
+
+const _chatUpdate: TopicUpdate<AppSchema> = {
+  key: "chat",
+  state: [{ author: "dan", text: "hi" }],
+  data: { author: "dan", text: "hi" },
+};
+const _badChatUpdate: TopicUpdate<AppSchema> = {
+  key: "chat",
+  state: [],
+  // @ts-expect-error — all-topic update data must match its topic payload
+  data: { symbol: "BTC", value: 1 },
+};
+
+store.subscribeRaw((message) => {
+  const _data: unknown = message.data;
+  const _event: MessageEvent = message.event;
+});
+
+store.subscribeUnhandled((message) => {
+  const _key: string = message.key;
+  const _data: unknown = message.data;
+});
 
 // send — data must match the payload type for the given key
 store.send({ key: "chat", data: { author: "carol", text: "hey" } });
