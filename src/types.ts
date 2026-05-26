@@ -135,7 +135,7 @@ export type SocketStoreErrorContext = {
 };
 
 export class SocketStoreError extends Error {
-  name = "SocketStoreError";
+  override name = "SocketStoreError";
   code: SocketStoreErrorCode;
   context: SocketStoreErrorContext;
 
