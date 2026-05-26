@@ -218,12 +218,20 @@ describe("SocketStore", () => {
     });
   });
 
-  it("throws async message errors when onError is not provided", () => {
+  it("does not throw async message errors when onError is not provided", () => {
     const { socket } = createStore();
 
     expect(() => {
       socket.dispatch("message", { data: "{" });
-    }).toThrow(SocketStoreError);
+    }).not.toThrow();
+  });
+
+  it("does not throw native socket error events when onError is not provided", () => {
+    const { socket } = createStore();
+
+    expect(() => {
+      socket.dispatch("error", new Event("error"));
+    }).not.toThrow();
   });
 
   it("fails early for duplicate handler keys", () => {

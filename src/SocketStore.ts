@@ -204,11 +204,6 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
   }
 
   private emitError(error: SocketStoreError) {
-    if (this.options.onError) {
-      this.options.onError(error);
-      return;
-    }
-
-    throw error;
+    this.options.onError?.(error);
   }
 }
