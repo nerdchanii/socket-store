@@ -187,9 +187,9 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
       );
     }
 
-    let serialized: SocketStoreSendData;
     try {
-      serialized = this.serializeMessage({ key, data });
+      const serialized = this.serializeMessage({ key, data });
+      this.socket.send(serialized);
     } catch (error) {
       const socketError =
         error instanceof SocketStoreError
@@ -203,8 +203,6 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
       this.emitError(socketError);
       throw socketError;
     }
-
-    this.socket.send(serialized);
   };
 
   private setData = ({ key, state }: { key: string; state: any }) => {
@@ -352,11 +350,13 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
   }
 
   private parseMessage(event: MessageEvent): SocketStoreProtocolResult | undefined {
-    const parser = this.options.protocol?.parse ?? this.parseDefaultMessage;
+    const protocol = this.options.protocol;
 
     let result: SocketStoreProtocolResult;
     try {
-      result = parser(event);
+      result = protocol?.parse
+        ? protocol.parse.call(protocol, event)
+        : this.parseDefaultMessage(event);
     } catch (error) {
       const socketError =
         error instanceof SocketStoreError
@@ -431,10 +431,13 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
     key: K;
     data: TopicPayload<Schema, K>;
   }): SocketStoreSendData => {
-    const serializer = this.options.protocol?.serialize;
+    const protocol = this.options.protocol;
 
-    if (serializer) {
-      return serializer({ key, data } as SocketStoreOutgoingMessage<Schema>);
+    if (protocol?.serialize) {
+      return protocol.serialize.call(
+        protocol,
+        { key, data } as SocketStoreOutgoingMessage<Schema>
+      );
     }
 
     return JSON.stringify({ key, data });

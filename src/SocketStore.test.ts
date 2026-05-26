@@ -10,6 +10,7 @@ class FakeWebSocket {
   readyState = FakeWebSocket.OPEN;
   sent: SocketStoreSendData[] = [];
   listeners = new Map<string, Set<Listener>>();
+  sendError?: unknown;
 
   addEventListener(type: string, listener: Listener) {
     const listeners = this.listeners.get(type) ?? new Set<Listener>();
@@ -22,6 +23,10 @@ class FakeWebSocket {
   }
 
   send(data: SocketStoreSendData) {
+    if (this.sendError) {
+      throw this.sendError;
+    }
+
     this.sent.push(data);
   }
 
@@ -145,6 +150,22 @@ describe("SocketStore", () => {
     expect(new TextDecoder().decode(socket.sent[0] as ArrayBuffer)).toBe(
       JSON.stringify({ topic: "chat", payload: "hello" })
     );
+  });
+
+  it("preserves custom serializer method context", () => {
+    const protocol = {
+      prefix: "encoded:",
+      serialize({ key, data }: { key: string; data: unknown }) {
+        return `${this.prefix}${JSON.stringify({ topic: key, payload: data })}`;
+      },
+    };
+    const { socket, store } = createStore({ protocol });
+
+    store.send({ key: "chat", data: "hello" });
+
+    expect(socket.sent).toEqual([
+      'encoded:{"topic":"chat","payload":"hello"}',
+    ]);
   });
 
   it("throws a SocketStoreError before sending when the socket is not open", () => {
@@ -331,6 +352,24 @@ describe("SocketStore", () => {
     expect(store.getState("chat")).toEqual(["hello"]);
   });
 
+  it("preserves custom parser method context", () => {
+    const protocol = {
+      topic: "chat",
+      parse(event: MessageEvent) {
+        return {
+          type: "topic" as const,
+          key: this.topic,
+          data: event.data,
+        };
+      },
+    };
+    const { socket, store } = createStore({ protocol });
+
+    socket.dispatch("message", { data: "hello" });
+
+    expect(store.getState("chat")).toEqual(["hello"]);
+  });
+
   it("lets custom parsers map ArrayBuffer message data", () => {
     const { socket, store } = createStore({
       protocol: {
@@ -461,6 +500,33 @@ describe("SocketStore", () => {
         },
       },
     });
+
+    expect(() => store.send({ key: "chat", data: "hello" })).toThrow(SocketStoreError);
+    expect(onError).toHaveBeenCalledWith(expect.any(SocketStoreError));
+    expect(onError.mock.calls[0][0]).toMatchObject({
+      code: "ERR_PROTOCOL_SERIALIZE_FAILED",
+      context: {
+        phase: "send",
+        key: "chat",
+        data: "hello",
+        cause,
+      },
+    });
+    expect(socket.sent).toEqual([]);
+  });
+
+  it("reports send-time serializer payload failures through onError and throws", () => {
+    const onError = vi.fn();
+    const cause = new TypeError("unsupported payload");
+    const { socket, store } = createStore({
+      onError,
+      protocol: {
+        serialize() {
+          return { unsupported: true } as never;
+        },
+      },
+    });
+    socket.sendError = cause;
 
     expect(() => store.send({ key: "chat", data: "hello" })).toThrow(SocketStoreError);
     expect(onError).toHaveBeenCalledWith(expect.any(SocketStoreError));
