@@ -24,6 +24,10 @@ type StoreListener = {
   listener: (state: any) => void;
 };
 
+type ListenerEntry<Listener> = {
+  listener: Listener;
+};
+
 const OPEN_READY_STATE = 1;
 
 export class SocketStore<Schema extends SocketSchema = DefaultSchema>
@@ -31,9 +35,9 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
 {
   store = {} as Store;
   listeners: StoreListener[];
-  private rawListeners: RawMessageListener[];
-  private allTopicListeners: Array<TopicUpdateListener<Schema>>;
-  private unhandledListeners: UnhandledMessageListener[];
+  private rawListeners: Array<ListenerEntry<RawMessageListener>>;
+  private allTopicListeners: Array<ListenerEntry<TopicUpdateListener<Schema>>>;
+  private unhandledListeners: Array<ListenerEntry<UnhandledMessageListener>>;
   options = {} as ISocketStoreOptions;
   private disposed = false;
   private readonly handleOpen = () => this.onConnect();
@@ -241,7 +245,8 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
   subscribeRaw = (listener: RawMessageListener): Unsubscribe => {
     this.assertActive("subscribe");
 
-    this.rawListeners.push(listener);
+    const entry = { listener };
+    this.rawListeners.push(entry);
 
     let subscribed = true;
     return () => {
@@ -250,14 +255,15 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
       }
 
       subscribed = false;
-      this.rawListeners = this.rawListeners.filter((current) => current !== listener);
+      this.rawListeners = this.rawListeners.filter((current) => current !== entry);
     };
   };
 
   subscribeAll = (listener: TopicUpdateListener<Schema>): Unsubscribe => {
     this.assertActive("subscribe");
 
-    this.allTopicListeners.push(listener);
+    const entry = { listener };
+    this.allTopicListeners.push(entry);
 
     let subscribed = true;
     return () => {
@@ -266,14 +272,15 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
       }
 
       subscribed = false;
-      this.allTopicListeners = this.allTopicListeners.filter((current) => current !== listener);
+      this.allTopicListeners = this.allTopicListeners.filter((current) => current !== entry);
     };
   };
 
   subscribeUnhandled = (listener: UnhandledMessageListener): Unsubscribe => {
     this.assertActive("subscribe");
 
-    this.unhandledListeners.push(listener);
+    const entry = { listener };
+    this.unhandledListeners.push(entry);
 
     let subscribed = true;
     return () => {
@@ -282,7 +289,7 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
       }
 
       subscribed = false;
-      this.unhandledListeners = this.unhandledListeners.filter((current) => current !== listener);
+      this.unhandledListeners = this.unhandledListeners.filter((current) => current !== entry);
     };
   };
 
@@ -297,21 +304,21 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
 
   private notifyRaw = (message: RawSocketStoreMessage) => {
     const snapshot = [...this.rawListeners];
-    snapshot.forEach((listener) => {
+    snapshot.forEach(({ listener }) => {
       listener(message);
     });
   };
 
   private notifyAllTopics = (update: TopicUpdate<Schema>) => {
     const snapshot = [...this.allTopicListeners];
-    snapshot.forEach((listener) => {
+    snapshot.forEach(({ listener }) => {
       listener(update);
     });
   };
 
   private notifyUnhandled = (message: SocketStoreEnvelope) => {
     const snapshot = [...this.unhandledListeners];
-    snapshot.forEach((listener) => {
+    snapshot.forEach(({ listener }) => {
       listener(message);
     });
   };

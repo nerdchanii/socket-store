@@ -204,6 +204,35 @@ describe("SocketStore", () => {
     expect(unhandledListener).toHaveBeenCalledTimes(1);
   });
 
+  it("removes duplicate raw, all-topic, and unhandled subscriptions independently", () => {
+    const { socket, store } = createStore();
+    const rawListener = vi.fn();
+    const allListener = vi.fn();
+    const unhandledListener = vi.fn();
+
+    const unsubscribeRaw = store.subscribeRaw(rawListener);
+    store.subscribeRaw(rawListener);
+    const unsubscribeAll = store.subscribeAll(allListener);
+    store.subscribeAll(allListener);
+    const unsubscribeUnhandled = store.subscribeUnhandled(unhandledListener);
+    store.subscribeUnhandled(unhandledListener);
+
+    unsubscribeRaw();
+    unsubscribeAll();
+    unsubscribeUnhandled();
+
+    socket.dispatch("message", {
+      data: JSON.stringify({ key: "chat", data: "hello" }),
+    });
+    socket.dispatch("message", {
+      data: JSON.stringify({ key: "unknown", data: "ignored" }),
+    });
+
+    expect(rawListener).toHaveBeenCalledTimes(2);
+    expect(allListener).toHaveBeenCalledTimes(1);
+    expect(unhandledListener).toHaveBeenCalledTimes(1);
+  });
+
   it("notifies duplicate subscriptions independently and preserves notification order", () => {
     const { socket, store } = createStore();
     const calls: string[] = [];
