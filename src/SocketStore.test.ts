@@ -238,6 +238,23 @@ describe("SocketStore", () => {
     ).toThrow("Duplicate socket-store handler key: chat");
   });
 
+  it("does not attach socket listeners when duplicate handler validation fails", () => {
+    const socket = new FakeWebSocket();
+
+    expect(
+      () =>
+        new SocketStore(socket as unknown as WebSocket, [
+          createMessageHandler("chat", (state: string[], data: string) => [...state, data], []),
+          createMessageHandler("chat", (state: string[], data: string) => [...state, data], []),
+        ])
+    ).toThrow("Duplicate socket-store handler key: chat");
+
+    expect(socket.listenerCount("open")).toBe(0);
+    expect(socket.listenerCount("message")).toBe(0);
+    expect(socket.listenerCount("error")).toBe(0);
+    expect(socket.listenerCount("close")).toBe(0);
+  });
+
   it("allows prototype property names as first-time handler keys", () => {
     const socket = new FakeWebSocket();
     const store = new SocketStore(socket as unknown as WebSocket, [

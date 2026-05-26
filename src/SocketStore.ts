@@ -34,10 +34,6 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
   ) {
     this.options = options || {};
     this.listeners = [];
-    this.socket.addEventListener("open", this.onConnect.bind(this));
-    this.socket.addEventListener("message", this.onMessage.bind(this));
-    this.socket.addEventListener("error", this.onError.bind(this));
-    this.socket.addEventListener("close", this.onClose.bind(this));
 
     const handlers = messageHandlers as Array<MessageHandler<any, any>>;
     this.store = handlers.reduce((acc, cur) => {
@@ -52,6 +48,11 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
       acc[cur.key] = temp;
       return acc;
     }, Object.create(null) as Store);
+
+    this.socket.addEventListener("open", this.onConnect.bind(this));
+    this.socket.addEventListener("message", this.onMessage.bind(this));
+    this.socket.addEventListener("error", this.onError.bind(this));
+    this.socket.addEventListener("close", this.onClose.bind(this));
   }
 
   onConnect() {
