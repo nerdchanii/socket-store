@@ -16,6 +16,7 @@ import type {
   SchemaMessageHandler,
   SocketStoreMessageHandlers,
   SendMessage,
+  Unsubscribe,
   MessageHandler,
 } from "./index";
 
@@ -147,9 +148,10 @@ const chatMessages: Message[] = store.getState("chat");
 store.getState("unknown");
 
 // subscribe — listener receives the correct state type
-store.subscribe("chat", (msgs: Message[]) => {
+const unsubscribe: Unsubscribe = store.subscribe("chat", (msgs: Message[]) => {
   const _first: Message = msgs[0];
 });
+unsubscribe();
 // @ts-expect-error — listener receives Message[], not string[]
 store.subscribe("chat", (_msgs: string[]) => {});
 

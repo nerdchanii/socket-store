@@ -64,6 +64,9 @@ export type SendMessage<Schema extends SocketSchema> = <K extends TopicKey<Schem
   data: TopicPayload<Schema, K>;
 }) => void;
 
+/** Removes a subscription. Safe to call more than once. */
+export type Unsubscribe = () => void;
+
 // ===== Fallback type for non-schema usage =====
 
 /** @internal Default schema used when no explicit schema is provided. */
@@ -86,7 +89,7 @@ export interface ISocketStore<Schema extends SocketSchema = DefaultSchema> {
   subscribe<K extends TopicKey<Schema>>(
     key: K,
     listener: (state: TopicState<Schema, K>) => void
-  ): void;
+  ): Unsubscribe;
 }
 
 export type Store = {
