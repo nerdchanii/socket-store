@@ -28,5 +28,4 @@
 
 ## Notes
 
-Related issue/backlog:
-
+Related issue:

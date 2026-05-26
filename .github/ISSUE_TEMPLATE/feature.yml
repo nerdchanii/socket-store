@@ -64,7 +64,6 @@ body:
     id: notes
     attributes:
       label: Notes
-      description: Links, related backlog files, or implementation notes.
+      description: Public links, related issues, or implementation notes.
     validations:
       required: false
-

@@ -24,11 +24,14 @@
     "build:esm": "tsc",
     "build:cjs": "tsc --module commonjs --outDir dist/cjs",
     "typecheck": "tsc --noEmit",
+    "example:client": "vite examples/basic",
+    "example:server": "node examples/basic/server.mjs",
+    "example:typecheck": "tsc -p examples/basic/tsconfig.json",
     "type-test": "tsc -p tsconfig.test-d.json",
     "test": "vitest run",
-    "lint": "npm run typecheck",
+    "lint": "npm run typecheck && npm run example:typecheck",
     "pack:dry-run": "npm pack --dry-run",
-    "prepack": "npm run typecheck && npm run type-test && npm run test && npm run build"
+    "prepack": "npm run typecheck && npm run example:typecheck && npm run type-test && npm run test && npm run build"
   },
   "repository": {
     "type": "git",
@@ -48,8 +51,10 @@
   "author": "nerdchanii <nerdchanii@gmail.com>",
   "license": "MIT",
   "devDependencies": {
+    "@types/ws": "^8.18.1",
     "typescript": "^5.9.3",
     "vite": "^8.0.14",
-    "vitest": "^4.1.7"
+    "vitest": "^4.1.7",
+    "ws": "^8.21.0"
   }
 }
