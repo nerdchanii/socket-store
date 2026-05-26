@@ -82,8 +82,15 @@ export type RawSocketStoreMessage = {
 /** Listener for raw WebSocket messages before protocol parsing. */
 export type RawMessageListener = (message: RawSocketStoreMessage) => void;
 
-/** Parsed envelope that did not match a registered topic handler. */
-export type UnhandledMessageListener = (message: SocketStoreEnvelope) => void;
+/** Parsed message that the store deliberately leaves unrouted. */
+export type UnhandledSocketStoreMessage = {
+  key?: string;
+  data: unknown;
+};
+
+export type UnhandledMessageListener = (
+  message: UnhandledSocketStoreMessage
+) => void;
 
 /** Successful topic update observed after the topic state has changed. */
 export type TopicUpdate<Schema extends SocketSchema = DefaultSchema> = {
@@ -104,6 +111,9 @@ export type SocketStoreErrorCode =
   | "ERR_UNSUPPORTED_MESSAGE_DATA"
   | "ERR_INVALID_JSON"
   | "ERR_MALFORMED_ENVELOPE"
+  | "ERR_INVALID_PROTOCOL_RESULT"
+  | "ERR_PROTOCOL_PARSE_FAILED"
+  | "ERR_PROTOCOL_SERIALIZE_FAILED"
   | "ERR_UNKNOWN_TOPIC"
   | "ERR_HANDLER_FAILED"
   | "ERR_SOCKET_NOT_OPEN";
@@ -145,6 +155,49 @@ export class SocketStoreError extends Error {
 /** @internal Default schema used when no explicit schema is provided. */
 export type DefaultSchema = Record<string, { state: any; payload: any }>;
 
+export type SocketStoreProtocolTopicResult = {
+  type: "topic";
+  key: string;
+  data: unknown;
+};
+
+export type SocketStoreProtocolUnhandledResult = {
+  type: "unhandled";
+  key?: string;
+  data: unknown;
+};
+
+export type SocketStoreProtocolIgnoreResult = {
+  type: "ignore";
+};
+
+export type SocketStoreProtocolResult =
+  | SocketStoreProtocolTopicResult
+  | SocketStoreProtocolUnhandledResult
+  | SocketStoreProtocolIgnoreResult;
+
+export type SocketStoreProtocolParser = (
+  event: MessageEvent
+) => SocketStoreProtocolResult;
+
+export type SocketStoreSendData = Parameters<WebSocket["send"]>[0];
+
+export type SocketStoreOutgoingMessage<Schema extends SocketSchema> = {
+  [K in TopicKey<Schema>]: {
+    key: K;
+    data: TopicPayload<Schema, K>;
+  };
+}[TopicKey<Schema>];
+
+export type SocketStoreProtocolSerializer<Schema extends SocketSchema> = (
+  message: SocketStoreOutgoingMessage<Schema>
+) => SocketStoreSendData;
+
+export type SocketStoreProtocol<Schema extends SocketSchema = DefaultSchema> = {
+  parse?: SocketStoreProtocolParser;
+  serialize?: SocketStoreProtocolSerializer<Schema>;
+};
+
 // ===== Store interfaces =====
 
 export interface ISocketStore<Schema extends SocketSchema = DefaultSchema> {
@@ -176,8 +229,9 @@ export type Store = {
   };
 };
 
-export interface ISocketStoreOptions {
+export interface ISocketStoreOptions<Schema extends SocketSchema = DefaultSchema> {
   onConnect?: () => void;
   onClose?: (event: CloseEvent) => void;
   onError?: (error: SocketStoreError) => void;
+  protocol?: SocketStoreProtocol<Schema>;
 }

@@ -96,10 +96,48 @@ unsubscribeAll();
 unsubscribeUnhandled();
 ```
 
+### 2-5. Adapt a custom message protocol
+
+By default, incoming WebSocket messages must be JSON strings shaped as
+`{ key, data }`, and `store.send` writes the same envelope. If your server uses
+different field names or binary data, pass a synchronous protocol adapter.
+
+```ts
+const store = new SocketStore(socket, [talkHandler], {
+  protocol: {
+    parse(event) {
+      const message = JSON.parse(event.data);
+
+      if (message.type === "heartbeat") {
+        return { type: "ignore" };
+      }
+
+      if (!message.topic) {
+        return { type: "unhandled", data: message };
+      }
+
+      return {
+        type: "topic",
+        key: message.topic,
+        data: message.payload,
+      };
+    },
+    serialize({ key, data }) {
+      return JSON.stringify({ topic: key, payload: data });
+    },
+  },
+});
+```
+
+The parser receives the original `MessageEvent`, so adapters can handle
+`string`, `ArrayBuffer`, `Blob`, or runtime-specific `event.data` values. Parser
+failures are reported to `onError` as `SocketStoreError` values. SocketStore is
+not a byte-level streaming parser; decode complete WebSocket messages in your
+adapter and return `topic`, `unhandled`, or `ignore`.
+
 
 ## LICENSE
 
 MIT
-
 
 

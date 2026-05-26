@@ -9,12 +9,16 @@ import {
   SocketStoreError,
   SocketStoreEnvelope,
   SocketStoreMessageHandlers,
+  SocketStoreOutgoingMessage,
+  SocketStoreProtocolResult,
+  SocketStoreSendData,
   Store,
   TopicKey,
   TopicPayload,
   TopicState,
   TopicUpdate,
   TopicUpdateListener,
+  UnhandledSocketStoreMessage,
   UnhandledMessageListener,
   Unsubscribe,
 } from "./types";
@@ -38,7 +42,7 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
   private rawListeners: Array<ListenerEntry<RawMessageListener>>;
   private allTopicListeners: Array<ListenerEntry<TopicUpdateListener<Schema>>>;
   private unhandledListeners: Array<ListenerEntry<UnhandledMessageListener>>;
-  options = {} as ISocketStoreOptions;
+  options = {} as ISocketStoreOptions<Schema>;
   private disposed = false;
   private readonly handleOpen = () => this.onConnect();
   private readonly handleMessage = (event: MessageEvent) =>
@@ -49,7 +53,7 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
   constructor(
     protected socket: WebSocket,
     messageHandlers: SocketStoreMessageHandlers<Schema>,
-    options?: ISocketStoreOptions
+    options?: ISocketStoreOptions<Schema>
   ) {
     this.options = options || {};
     this.listeners = [];
@@ -99,41 +103,18 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
       return;
     }
 
-    if (typeof data !== "string") {
-      this.emitError(
-        new SocketStoreError(
-          "ERR_UNSUPPORTED_MESSAGE_DATA",
-          "socket-store default protocol only supports string message data",
-          { phase: "parse", data }
-        )
-      );
+    const parsed = this.parseMessage(event);
+
+    if (parsed === undefined || this.disposed || parsed.type === "ignore") {
       return;
     }
 
-    let payload: unknown;
-    try {
-      payload = JSON.parse(data);
-    } catch (error) {
-      this.emitError(
-        new SocketStoreError("ERR_INVALID_JSON", "Invalid JSON message", {
-          phase: "parse",
-          data,
-          cause: error,
-        })
-      );
+    if (parsed.type === "unhandled") {
+      this.notifyUnhandled({ key: parsed.key, data: parsed.data });
       return;
     }
 
-    if (!this.isEnvelope(payload)) {
-      this.emitError(
-        new SocketStoreError(
-          "ERR_MALFORMED_ENVELOPE",
-          "SocketStore message must be a JSON object with a string key",
-          { phase: "validate", data: payload }
-        )
-      );
-      return;
-    }
+    const payload = { key: parsed.key, data: parsed.data };
 
     if (!this.hasHandler(payload.key)) {
       this.notifyUnhandled(payload);
@@ -206,7 +187,24 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
       );
     }
 
-    this.socket.send(JSON.stringify({ key, data }));
+    let serialized: SocketStoreSendData;
+    try {
+      serialized = this.serializeMessage({ key, data });
+    } catch (error) {
+      const socketError =
+        error instanceof SocketStoreError
+          ? error
+          : new SocketStoreError(
+              "ERR_PROTOCOL_SERIALIZE_FAILED",
+              `SocketStore protocol serializer failed for topic: ${key}`,
+              { phase: "send", key, data, cause: error }
+            );
+
+      this.emitError(socketError);
+      throw socketError;
+    }
+
+    this.socket.send(serialized);
   };
 
   private setData = ({ key, state }: { key: string; state: any }) => {
@@ -316,7 +314,7 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
     });
   };
 
-  private notifyUnhandled = (message: SocketStoreEnvelope) => {
+  private notifyUnhandled = (message: UnhandledSocketStoreMessage) => {
     const snapshot = [...this.unhandledListeners];
     snapshot.forEach(({ listener }) => {
       listener(message);
@@ -351,6 +349,113 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
     }
 
     return typeof (value as { key?: unknown }).key === "string";
+  }
+
+  private parseMessage(event: MessageEvent): SocketStoreProtocolResult | undefined {
+    const parser = this.options.protocol?.parse ?? this.parseDefaultMessage;
+
+    let result: SocketStoreProtocolResult;
+    try {
+      result = parser(event);
+    } catch (error) {
+      const socketError =
+        error instanceof SocketStoreError
+          ? error
+          : new SocketStoreError(
+              "ERR_PROTOCOL_PARSE_FAILED",
+              "SocketStore protocol parser failed",
+              {
+                phase: "parse",
+                data: event.data,
+                event,
+                cause: error,
+              }
+            );
+
+      this.emitError(socketError);
+      return undefined;
+    }
+
+    if (!this.isProtocolResult(result)) {
+      this.emitError(
+        new SocketStoreError(
+          "ERR_INVALID_PROTOCOL_RESULT",
+          "SocketStore protocol parser must return a topic, unhandled, or ignore result",
+          { phase: "validate", data: result }
+        )
+      );
+      return undefined;
+    }
+
+    return result;
+  }
+
+  private parseDefaultMessage = (event: MessageEvent): SocketStoreProtocolResult => {
+    const { data } = event;
+
+    if (typeof data !== "string") {
+      throw new SocketStoreError(
+        "ERR_UNSUPPORTED_MESSAGE_DATA",
+        "socket-store default protocol only supports string message data",
+        { phase: "parse", data, event }
+      );
+    }
+
+    let payload: unknown;
+    try {
+      payload = JSON.parse(data);
+    } catch (error) {
+      throw new SocketStoreError("ERR_INVALID_JSON", "Invalid JSON message", {
+        phase: "parse",
+        data,
+        event,
+        cause: error,
+      });
+    }
+
+    if (!this.isEnvelope(payload)) {
+      throw new SocketStoreError(
+        "ERR_MALFORMED_ENVELOPE",
+        "SocketStore message must be a JSON object with a string key",
+        { phase: "validate", data: payload, event }
+      );
+    }
+
+    return { type: "topic", key: payload.key, data: payload.data };
+  };
+
+  private serializeMessage = <K extends TopicKey<Schema>>({
+    key,
+    data,
+  }: {
+    key: K;
+    data: TopicPayload<Schema, K>;
+  }): SocketStoreSendData => {
+    const serializer = this.options.protocol?.serialize;
+
+    if (serializer) {
+      return serializer({ key, data } as SocketStoreOutgoingMessage<Schema>);
+    }
+
+    return JSON.stringify({ key, data });
+  };
+
+  private isProtocolResult(value: unknown): value is SocketStoreProtocolResult {
+    if (value === null || typeof value !== "object") {
+      return false;
+    }
+
+    const result = value as { type?: unknown; key?: unknown };
+
+    if (result.type === "topic") {
+      return typeof result.key === "string";
+    }
+
+    if (result.type === "unhandled") {
+      return result.key === undefined || typeof result.key === "string";
+    }
+
+    return result.type === "ignore";
   }
 
   private emitError(error: SocketStoreError) {

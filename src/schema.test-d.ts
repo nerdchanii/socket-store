@@ -19,6 +19,8 @@ import type {
   TopicUpdate,
   Unsubscribe,
   MessageHandler,
+  SocketStoreProtocol,
+  SocketStoreProtocolResult,
 } from "./index";
 
 // ---------------------------------------------------------------------------
@@ -186,8 +188,41 @@ store.subscribeRaw((message) => {
 });
 
 store.subscribeUnhandled((message) => {
-  const _key: string = message.key;
+  const _key: string | undefined = message.key;
   const _data: unknown = message.data;
+});
+
+const _protocol: SocketStoreProtocol<AppSchema> = {
+  parse(event): SocketStoreProtocolResult {
+    const payload = JSON.parse(event.data as string) as {
+      topic?: string;
+      payload?: unknown;
+      ignored?: boolean;
+    };
+
+    if (payload.ignored) {
+      return { type: "ignore" };
+    }
+
+    if (!payload.topic) {
+      return { type: "unhandled", data: payload };
+    }
+
+    return { type: "topic", key: payload.topic, data: payload.payload };
+  },
+  serialize(message) {
+    if (message.key === "chat") {
+      const _chatPayload: Message = message.data;
+      return JSON.stringify({ topic: message.key, payload: _chatPayload });
+    }
+
+    const _pricePayload: PriceTick = message.data;
+    return JSON.stringify({ topic: message.key, payload: _pricePayload });
+  },
+};
+
+new SocketStore<AppSchema>(ws, [chatHandler, priceStoreHandler], {
+  protocol: _protocol,
 });
 
 // send — data must match the payload type for the given key

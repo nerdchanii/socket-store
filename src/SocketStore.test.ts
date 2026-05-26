@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { createMessageHandler, SocketStore, SocketStoreError } from "./index";
+import type { SocketStoreSendData } from "./index";
 
 type Listener = (event: any) => void;
 
@@ -7,7 +8,7 @@ class FakeWebSocket {
   static readonly OPEN = 1;
 
   readyState = FakeWebSocket.OPEN;
-  sent: string[] = [];
+  sent: SocketStoreSendData[] = [];
   listeners = new Map<string, Set<Listener>>();
 
   addEventListener(type: string, listener: Listener) {
@@ -20,7 +21,7 @@ class FakeWebSocket {
     this.listeners.get(type)?.delete(listener);
   }
 
-  send(data: string) {
+  send(data: SocketStoreSendData) {
     this.sent.push(data);
   }
 
@@ -125,6 +126,25 @@ describe("SocketStore", () => {
     store.send({ key: "chat", data: "hello" });
 
     expect(socket.sent).toEqual([JSON.stringify({ key: "chat", data: "hello" })]);
+  });
+
+  it("uses custom protocol serializers for outgoing messages", () => {
+    const { socket, store } = createStore({
+      protocol: {
+        serialize({ key, data }) {
+          return new TextEncoder().encode(
+            JSON.stringify({ topic: key, payload: data })
+          ).buffer;
+        },
+      },
+    });
+
+    store.send({ key: "chat", data: "hello" });
+
+    expect(socket.sent[0]).toBeInstanceOf(ArrayBuffer);
+    expect(new TextDecoder().decode(socket.sent[0] as ArrayBuffer)).toBe(
+      JSON.stringify({ topic: "chat", payload: "hello" })
+    );
   });
 
   it("throws a SocketStoreError before sending when the socket is not open", () => {
@@ -284,6 +304,176 @@ describe("SocketStore", () => {
       "ERR_UNSUPPORTED_MESSAGE_DATA",
     ]);
     expect(onError.mock.calls.every((call) => call[0] instanceof SocketStoreError)).toBe(true);
+  });
+
+  it("routes custom protocol topic results", () => {
+    const { socket, store } = createStore({
+      protocol: {
+        parse(event) {
+          const payload = JSON.parse(event.data as string) as {
+            topic: string;
+            payload: unknown;
+          };
+
+          return {
+            type: "topic",
+            key: payload.topic,
+            data: payload.payload,
+          };
+        },
+      },
+    });
+
+    socket.dispatch("message", {
+      data: JSON.stringify({ topic: "chat", payload: "hello" }),
+    });
+
+    expect(store.getState("chat")).toEqual(["hello"]);
+  });
+
+  it("lets custom parsers map ArrayBuffer message data", () => {
+    const { socket, store } = createStore({
+      protocol: {
+        parse(event) {
+          const payload = JSON.parse(
+            new TextDecoder().decode(event.data as ArrayBuffer)
+          ) as {
+            topic: string;
+            payload: unknown;
+          };
+
+          return {
+            type: "topic",
+            key: payload.topic,
+            data: payload.payload,
+          };
+        },
+      },
+    });
+    const data = new TextEncoder().encode(
+      JSON.stringify({ topic: "chat", payload: "from binary" })
+    ).buffer;
+
+    socket.dispatch("message", { data });
+
+    expect(store.getState("chat")).toEqual(["from binary"]);
+  });
+
+  it("lets custom parsers ignore messages", () => {
+    const onError = vi.fn();
+    const { socket, store } = createStore({
+      onError,
+      protocol: {
+        parse() {
+          return { type: "ignore" };
+        },
+      },
+    });
+
+    socket.dispatch("message", {
+      data: JSON.stringify({ key: "chat", data: "ignored" }),
+    });
+
+    expect(store.getState("chat")).toEqual([]);
+    expect(onError).not.toHaveBeenCalled();
+  });
+
+  it("notifies unhandled custom parser results without routing errors", () => {
+    const onError = vi.fn();
+    const { socket, store } = createStore({
+      onError,
+      protocol: {
+        parse(event) {
+          return { type: "unhandled", data: event.data };
+        },
+      },
+    });
+    const unhandled = vi.fn();
+
+    store.subscribeUnhandled(unhandled);
+    socket.dispatch("message", {
+      data: JSON.stringify({ type: "heartbeat" }),
+    });
+
+    expect(unhandled).toHaveBeenCalledWith({
+      key: undefined,
+      data: JSON.stringify({ type: "heartbeat" }),
+    });
+    expect(onError).not.toHaveBeenCalled();
+  });
+
+  it("reports custom parser failures through onError", () => {
+    const onError = vi.fn();
+    const cause = new Error("boom");
+    const { socket } = createStore({
+      onError,
+      protocol: {
+        parse() {
+          throw cause;
+        },
+      },
+    });
+
+    socket.dispatch("message", { data: new ArrayBuffer(8) });
+
+    expect(onError).toHaveBeenCalledWith(expect.any(SocketStoreError));
+    expect(onError.mock.calls[0][0]).toMatchObject({
+      code: "ERR_PROTOCOL_PARSE_FAILED",
+      context: {
+        phase: "parse",
+        data: expect.any(ArrayBuffer),
+        cause,
+      },
+    });
+  });
+
+  it("reports invalid custom parser results through onError", () => {
+    const onError = vi.fn();
+    const { socket } = createStore({
+      onError,
+      protocol: {
+        parse() {
+          return { type: "topic" } as never;
+        },
+      },
+    });
+
+    socket.dispatch("message", { data: "anything" });
+
+    expect(onError).toHaveBeenCalledWith(expect.any(SocketStoreError));
+    expect(onError.mock.calls[0][0]).toMatchObject({
+      code: "ERR_INVALID_PROTOCOL_RESULT",
+      context: {
+        phase: "validate",
+        data: { type: "topic" },
+      },
+    });
+  });
+
+  it("reports custom serializer failures through onError and throws", () => {
+    const onError = vi.fn();
+    const cause = new Error("cannot encode");
+    const { socket, store } = createStore({
+      onError,
+      protocol: {
+        serialize() {
+          throw cause;
+        },
+      },
+    });
+
+    expect(() => store.send({ key: "chat", data: "hello" })).toThrow(SocketStoreError);
+    expect(onError).toHaveBeenCalledWith(expect.any(SocketStoreError));
+    expect(onError.mock.calls[0][0]).toMatchObject({
+      code: "ERR_PROTOCOL_SERIALIZE_FAILED",
+      context: {
+        phase: "send",
+        key: "chat",
+        data: "hello",
+        cause,
+      },
+    });
+    expect(socket.sent).toEqual([]);
   });
 
   it("reports unknown topic envelopes through onError", () => {
