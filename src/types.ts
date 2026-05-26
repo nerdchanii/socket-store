@@ -73,6 +73,32 @@ export type SocketStoreEnvelope = {
   data: unknown;
 };
 
+/** Incoming WebSocket message observed before protocol parsing. */
+export type RawSocketStoreMessage = {
+  data: unknown;
+  event: MessageEvent;
+};
+
+/** Listener for raw WebSocket messages before protocol parsing. */
+export type RawMessageListener = (message: RawSocketStoreMessage) => void;
+
+/** Parsed envelope that did not match a registered topic handler. */
+export type UnhandledMessageListener = (message: SocketStoreEnvelope) => void;
+
+/** Successful topic update observed after the topic state has changed. */
+export type TopicUpdate<Schema extends SocketSchema = DefaultSchema> = {
+  [K in TopicKey<Schema>]: {
+    key: K;
+    data: TopicPayload<Schema, K>;
+    state: TopicState<Schema, K>;
+  };
+}[TopicKey<Schema>];
+
+/** Listener for every successful topic update. */
+export type TopicUpdateListener<Schema extends SocketSchema = DefaultSchema> = (
+  update: TopicUpdate<Schema>
+) => void;
+
 export type SocketStoreErrorCode =
   | "ERR_SOCKET_ERROR"
   | "ERR_UNSUPPORTED_MESSAGE_DATA"
@@ -137,6 +163,9 @@ export interface ISocketStore<Schema extends SocketSchema = DefaultSchema> {
     key: K,
     listener: (state: TopicState<Schema, K>) => void
   ): Unsubscribe;
+  subscribeRaw(listener: RawMessageListener): Unsubscribe;
+  subscribeAll(listener: TopicUpdateListener<Schema>): Unsubscribe;
+  subscribeUnhandled(listener: UnhandledMessageListener): Unsubscribe;
   dispose(): void;
 }
 

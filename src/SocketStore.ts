@@ -3,6 +3,8 @@ import {
   DefaultSchema,
   ISocketStore,
   ISocketStoreOptions,
+  RawMessageListener,
+  RawSocketStoreMessage,
   SocketSchema,
   SocketStoreError,
   SocketStoreEnvelope,
@@ -11,12 +13,19 @@ import {
   TopicKey,
   TopicPayload,
   TopicState,
+  TopicUpdate,
+  TopicUpdateListener,
+  UnhandledMessageListener,
   Unsubscribe,
 } from "./types";
 
 type StoreListener = {
   key: string;
   listener: (state: any) => void;
+};
+
+type ListenerEntry<Listener> = {
+  listener: Listener;
 };
 
 const OPEN_READY_STATE = 1;
@@ -26,10 +35,13 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
 {
   store = {} as Store;
   listeners: StoreListener[];
+  private rawListeners: Array<ListenerEntry<RawMessageListener>>;
+  private allTopicListeners: Array<ListenerEntry<TopicUpdateListener<Schema>>>;
+  private unhandledListeners: Array<ListenerEntry<UnhandledMessageListener>>;
   options = {} as ISocketStoreOptions;
   private disposed = false;
   private readonly handleOpen = () => this.onConnect();
-  private readonly handleMessage = (event: MessageEvent<string>) =>
+  private readonly handleMessage = (event: MessageEvent) =>
     this.onMessage(event);
   private readonly handleError = (event: Event) => this.onError(event);
   private readonly handleClose = (event: CloseEvent) => this.onClose(event);
@@ -41,6 +53,9 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
   ) {
     this.options = options || {};
     this.listeners = [];
+    this.rawListeners = [];
+    this.allTopicListeners = [];
+    this.unhandledListeners = [];
 
     const handlers = messageHandlers as Array<MessageHandler<any, any>>;
     this.store = handlers.reduce((acc, cur) => {
@@ -72,7 +87,14 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
     }
   }
 
-  onMessage({ data }: MessageEvent<string>) {
+  onMessage(event: MessageEvent) {
+    if (this.disposed) {
+      return;
+    }
+
+    const { data } = event;
+    this.notifyRaw({ data, event });
+
     if (this.disposed) {
       return;
     }
@@ -114,6 +136,7 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
     }
 
     if (!this.hasHandler(payload.key)) {
+      this.notifyUnhandled(payload);
       this.emitError(
         new SocketStoreError(
           "ERR_UNKNOWN_TOPIC",
@@ -142,7 +165,13 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
       return;
     }
 
+    const state = this.getState(payload.key as TopicKey<Schema>);
     this.notify(payload.key);
+    this.notifyAllTopics({
+      key: payload.key,
+      data: payload.data,
+      state,
+    } as TopicUpdate<Schema>);
   }
 
   onClose = (event: CloseEvent) => {
@@ -213,12 +242,84 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
     };
   };
 
+  subscribeRaw = (listener: RawMessageListener): Unsubscribe => {
+    this.assertActive("subscribe");
+
+    const entry = { listener };
+    this.rawListeners.push(entry);
+
+    let subscribed = true;
+    return () => {
+      if (!subscribed) {
+        return;
+      }
+
+      subscribed = false;
+      this.rawListeners = this.rawListeners.filter((current) => current !== entry);
+    };
+  };
+
+  subscribeAll = (listener: TopicUpdateListener<Schema>): Unsubscribe => {
+    this.assertActive("subscribe");
+
+    const entry = { listener };
+    this.allTopicListeners.push(entry);
+
+    let subscribed = true;
+    return () => {
+      if (!subscribed) {
+        return;
+      }
+
+      subscribed = false;
+      this.allTopicListeners = this.allTopicListeners.filter((current) => current !== entry);
+    };
+  };
+
+  subscribeUnhandled = (listener: UnhandledMessageListener): Unsubscribe => {
+    this.assertActive("subscribe");
+
+    const entry = { listener };
+    this.unhandledListeners.push(entry);
+
+    let subscribed = true;
+    return () => {
+      if (!subscribed) {
+        return;
+      }
+
+      subscribed = false;
+      this.unhandledListeners = this.unhandledListeners.filter((current) => current !== entry);
+    };
+  };
+
   private notify = (key: string) => {
     const snapshot = [...this.listeners];
     snapshot.forEach((listener) => {
       if (listener.key === key) {
         listener.listener(this.getState(key as TopicKey<Schema>));
       }
+    });
+  };
+
+  private notifyRaw = (message: RawSocketStoreMessage) => {
+    const snapshot = [...this.rawListeners];
+    snapshot.forEach(({ listener }) => {
+      listener(message);
+    });
+  };
+
+  private notifyAllTopics = (update: TopicUpdate<Schema>) => {
+    const snapshot = [...this.allTopicListeners];
+    snapshot.forEach(({ listener }) => {
+      listener(update);
+    });
+  };
+
+  private notifyUnhandled = (message: SocketStoreEnvelope) => {
+    const snapshot = [...this.unhandledListeners];
+    snapshot.forEach(({ listener }) => {
+      listener(message);
     });
   };
 
@@ -229,6 +330,9 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
 
     this.disposed = true;
     this.listeners = [];
+    this.rawListeners = [];
+    this.allTopicListeners = [];
+    this.unhandledListeners = [];
     this.socket.removeEventListener("open", this.handleOpen);
     this.socket.removeEventListener("message", this.handleMessage);
     this.socket.removeEventListener("error", this.handleError);

@@ -69,12 +69,37 @@ store.getState('talk');
 
 ```
 
+### 2-4. Observe incoming messages
+
+SocketStore also exposes observable paths for incoming messages around the
+default JSON `{ key, data }` protocol.
+
+```ts
+// Fires before SocketStore parses the WebSocket message data.
+const unsubscribeRaw = store.subscribeRaw(({ data, event }) => {
+  console.log(data, event);
+});
+
+// Fires after any registered topic updates its state.
+const unsubscribeAll = store.subscribeAll(({ key, data, state }) => {
+  console.log(key, data, state);
+});
+
+// Fires when a parsed message has a key with no registered handler.
+// Unknown topics are still reported through options.onError.
+const unsubscribeUnhandled = store.subscribeUnhandled(({ key, data }) => {
+  console.log(key, data);
+});
+
+unsubscribeRaw();
+unsubscribeAll();
+unsubscribeUnhandled();
+```
 
 
 ## LICENSE
 
 MIT
-
 
 
 

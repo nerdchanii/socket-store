@@ -61,6 +61,64 @@ describe("SocketStore", () => {
     expect(store.getState("chat")).toEqual(["hello"]);
   });
 
+  it("notifies raw message subscribers before parsing", () => {
+    const onError = vi.fn();
+    const { socket, store } = createStore({ onError });
+    const rawListener = vi.fn();
+    const invalidMessage = { data: "{" };
+
+    store.subscribeRaw(rawListener);
+    socket.dispatch("message", invalidMessage);
+
+    expect(rawListener).toHaveBeenCalledWith({
+      data: "{",
+      event: invalidMessage,
+    });
+    expect(onError).toHaveBeenCalledWith(expect.any(SocketStoreError));
+    expect(onError.mock.calls[0][0].code).toBe("ERR_INVALID_JSON");
+  });
+
+  it("notifies all-topic subscribers after successful topic updates", () => {
+    const { socket, store } = createStore();
+    const allListener = vi.fn();
+    const topicListener = vi.fn(() => {
+      expect(store.getState("chat")).toEqual(["hello"]);
+    });
+
+    store.subscribe("chat", topicListener);
+    store.subscribeAll(allListener);
+
+    socket.dispatch("message", {
+      data: JSON.stringify({ key: "chat", data: "hello" }),
+    });
+
+    expect(topicListener).toHaveBeenCalledWith(["hello"]);
+    expect(allListener).toHaveBeenCalledWith({
+      key: "chat",
+      data: "hello",
+      state: ["hello"],
+    });
+  });
+
+  it("notifies unhandled subscribers for parsed messages with no registered handler", () => {
+    const onError = vi.fn();
+    const { socket, store } = createStore({ onError });
+    const unhandledListener = vi.fn();
+
+    store.subscribeUnhandled(unhandledListener);
+    socket.dispatch("message", {
+      data: JSON.stringify({ key: "unknown", data: "ignored" }),
+    });
+
+    expect(unhandledListener).toHaveBeenCalledWith({
+      key: "unknown",
+      data: "ignored",
+    });
+    expect(onError).toHaveBeenCalledWith(expect.any(SocketStoreError));
+    expect(onError.mock.calls[0][0].code).toBe("ERR_UNKNOWN_TOPIC");
+    expect(store.getState("chat")).toEqual([]);
+  });
+
   it("serializes outgoing messages after checking socket readiness", () => {
     const { socket, store } = createStore();
 
@@ -108,6 +166,71 @@ describe("SocketStore", () => {
     expect(listener).toHaveBeenCalledTimes(1);
     expect(listener).toHaveBeenCalledWith(["first"]);
     expect(store.getState("chat")).toEqual(["first", "second"]);
+  });
+
+  it("returns idempotent unsubscribe functions from raw, all-topic, and unhandled subscriptions", () => {
+    const { socket, store } = createStore();
+    const rawListener = vi.fn();
+    const allListener = vi.fn();
+    const unhandledListener = vi.fn();
+
+    const unsubscribeRaw = store.subscribeRaw(rawListener);
+    const unsubscribeAll = store.subscribeAll(allListener);
+    const unsubscribeUnhandled = store.subscribeUnhandled(unhandledListener);
+
+    socket.dispatch("message", {
+      data: JSON.stringify({ key: "chat", data: "first" }),
+    });
+    socket.dispatch("message", {
+      data: JSON.stringify({ key: "unknown", data: "ignored" }),
+    });
+
+    unsubscribeRaw();
+    unsubscribeRaw();
+    unsubscribeAll();
+    unsubscribeAll();
+    unsubscribeUnhandled();
+    unsubscribeUnhandled();
+
+    socket.dispatch("message", {
+      data: JSON.stringify({ key: "chat", data: "second" }),
+    });
+    socket.dispatch("message", {
+      data: JSON.stringify({ key: "missing", data: "ignored" }),
+    });
+
+    expect(rawListener).toHaveBeenCalledTimes(2);
+    expect(allListener).toHaveBeenCalledTimes(1);
+    expect(unhandledListener).toHaveBeenCalledTimes(1);
+  });
+
+  it("removes duplicate raw, all-topic, and unhandled subscriptions independently", () => {
+    const { socket, store } = createStore();
+    const rawListener = vi.fn();
+    const allListener = vi.fn();
+    const unhandledListener = vi.fn();
+
+    const unsubscribeRaw = store.subscribeRaw(rawListener);
+    store.subscribeRaw(rawListener);
+    const unsubscribeAll = store.subscribeAll(allListener);
+    store.subscribeAll(allListener);
+    const unsubscribeUnhandled = store.subscribeUnhandled(unhandledListener);
+    store.subscribeUnhandled(unhandledListener);
+
+    unsubscribeRaw();
+    unsubscribeAll();
+    unsubscribeUnhandled();
+
+    socket.dispatch("message", {
+      data: JSON.stringify({ key: "chat", data: "hello" }),
+    });
+    socket.dispatch("message", {
+      data: JSON.stringify({ key: "unknown", data: "ignored" }),
+    });
+
+    expect(rawListener).toHaveBeenCalledTimes(2);
+    expect(allListener).toHaveBeenCalledTimes(1);
+    expect(unhandledListener).toHaveBeenCalledTimes(1);
   });
 
   it("notifies duplicate subscriptions independently and preserves notification order", () => {
@@ -313,6 +436,15 @@ describe("SocketStore", () => {
 
     expect(store.getState("chat")).toEqual([]);
     expect(() => store.subscribe("chat", () => undefined)).toThrow(
+      "Cannot subscribe after SocketStore has been disposed"
+    );
+    expect(() => store.subscribeRaw(() => undefined)).toThrow(
+      "Cannot subscribe after SocketStore has been disposed"
+    );
+    expect(() => store.subscribeAll(() => undefined)).toThrow(
+      "Cannot subscribe after SocketStore has been disposed"
+    );
+    expect(() => store.subscribeUnhandled(() => undefined)).toThrow(
       "Cannot subscribe after SocketStore has been disposed"
     );
     expect(() => store.send({ key: "chat", data: "hello" })).toThrow(
