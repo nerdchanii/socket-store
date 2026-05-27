@@ -1,0 +1,49 @@
+# socket-store
+
+socket-store is a small WebSocket-first topic state store. It accepts a
+standard WebSocket instance, routes incoming messages by topic, and lets topic
+handlers turn payloads into local snapshots.
+
+Canonical docs:
+
+- Overview, install, lifecycle, migration notes, and non-goals:
+  `README.md`
+- Public API contract, runtime semantics, type contracts, error behavior, and
+  undecided behavior:
+  `docs/guide/api.md`
+- Runnable WebSocket topic-store example with setup, expected message flow, and
+  cleanup:
+  `docs/guide/example.md`
+- Documentation rules for future agent-authored changes:
+  `docs/style-guide.md`
+- CI and verification troubleshooting:
+  `docs/project/check-failure-playbook.md`
+
+Public APIs:
+
+- `SocketStore`
+- `createMessageHandler`
+- `SocketStoreError`
+- `SocketStoreProtocol`
+- Schema helper types exported from `src/types.ts`
+
+Use the default protocol only for complete JSON WebSocket messages shaped like
+`{ "key": "...", "data": ... }`. Use the custom protocol adapter documented in
+`README.md` and `docs/guide/api.md` when a server sends a different complete
+message shape.
+
+Examples:
+
+- `examples/basic` is the canonical runnable browser and local WebSocket server
+  example.
+- `npm run example:typecheck` verifies the example client types.
+
+Non-goals:
+
+- socket-store is not a React hook package, RPC framework, CRDT engine,
+  persistence layer, reconnection manager, byte-level stream parser, MCP
+  docs-query integration, or A2A protocol implementation.
+
+Before changing docs, prefer source-backed claims from `src/`, tests, and the
+runnable example. Mark behavior as unsupported or undecided when the source and
+tests do not define it.
