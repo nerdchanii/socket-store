@@ -67,6 +67,38 @@ export type SendMessage<Schema extends SocketSchema> = <K extends TopicKey<Schem
 /** Removes a subscription. Safe to call more than once. */
 export type Unsubscribe = () => void;
 
+/** Listener for a single topic's next state. */
+export type TopicStateListener<
+  Schema extends SocketSchema,
+  K extends TopicKey<Schema>
+> = (state: TopicState<Schema, K>) => void;
+
+/** Public state reader contract used by framework adapters. */
+export type SocketStoreStateGetter<
+  Schema extends SocketSchema = DefaultSchema
+> = <K extends TopicKey<Schema>>(key: K) => TopicState<Schema, K>;
+
+/** Public sender contract used by framework adapters. */
+export type SocketStoreSender<Schema extends SocketSchema = DefaultSchema> =
+  SendMessage<Schema>;
+
+/** Public topic subscription contract used by framework adapters. */
+export type SocketStoreSubscriber<
+  Schema extends SocketSchema = DefaultSchema
+> = <K extends TopicKey<Schema>>(
+  key: K,
+  listener: TopicStateListener<Schema, K>
+) => Unsubscribe;
+
+/** Minimal public SocketStore surface needed by framework adapters. */
+export interface SocketStoreAdapterContract<
+  Schema extends SocketSchema = DefaultSchema
+> {
+  send: SocketStoreSender<Schema>;
+  getState: SocketStoreStateGetter<Schema>;
+  subscribe: SocketStoreSubscriber<Schema>;
+}
+
 /** JSON string envelope supported by the v1 default protocol. */
 export type SocketStoreEnvelope = {
   key: string;
@@ -206,16 +238,13 @@ export interface ISocketStore<Schema extends SocketSchema = DefaultSchema> {
    */
   onConnect(): void;
   onMessage(message: MessageEvent): void;
-  send<K extends TopicKey<Schema>>({ key, data }: { key: K; data: TopicPayload<Schema, K> }): void;
+  send: SocketStoreSender<Schema>;
 
   /**
    * method related to the store
    */
-  getState<K extends TopicKey<Schema>>(key: K): TopicState<Schema, K>;
-  subscribe<K extends TopicKey<Schema>>(
-    key: K,
-    listener: (state: TopicState<Schema, K>) => void
-  ): Unsubscribe;
+  getState: SocketStoreStateGetter<Schema>;
+  subscribe: SocketStoreSubscriber<Schema>;
   subscribeRaw(listener: RawMessageListener): Unsubscribe;
   subscribeAll(listener: TopicUpdateListener<Schema>): Unsubscribe;
   subscribeUnhandled(listener: UnhandledMessageListener): Unsubscribe;
