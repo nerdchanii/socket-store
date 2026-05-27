@@ -40,8 +40,9 @@ token.
 ## Tags And GitHub Releases
 
 Changesets owns version commits, changelog entries, npm publish, package tags,
-and GitHub Releases. For `socket-store@x.y.z`, the git tag and GitHub Release
-must use the same `socket-store@x.y.z` version string that appears on npm.
+and GitHub Releases. For npm version `x.y.z`, the git tag and GitHub Release
+must use Changesets' single-package tag format, `vx.y.z`, so release artifacts
+point at the same package version that appears on npm.
 
 ## Adapter Release Order
 
