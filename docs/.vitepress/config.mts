@@ -9,7 +9,10 @@ export default defineConfig({
     sidebar: [
       {
         text: "Guide",
-        items: [{ text: "Overview", link: "/" }],
+        items: [
+          { text: "Overview", link: "/" },
+          { text: "API Contract", link: "/api" },
+        ],
       },
     ],
     socialLinks: [
@@ -17,4 +20,3 @@ export default defineConfig({
     ],
   },
 });
-

@@ -10,6 +10,8 @@ test inspection.
 
 ## Current Public Docs
 
+- [API Contract](/api): source-backed public entry points, runtime semantics,
+  type contracts, error behavior, and non-goals.
 - [README](https://github.com/nerdchanii/socket-store#readme): install, default
   protocol, lifecycle, errors, custom protocol adapters, examples, migration
   notes, and non-goals.
