@@ -16,6 +16,10 @@
       "covers": ["connection status values", "status transitions", "close and error semantics", "deferred reconnect boundaries"]
     },
     {
+      "path": "docs/guide/reconnect.md",
+      "covers": ["proposed reconnect option shape", "retry limits", "backoff choices", "close behavior", "implementation boundaries"]
+    },
+    {
       "path": "docs/guide/example.md",
       "covers": ["runnable example setup", "expected message flow", "cleanup behavior"]
     },
