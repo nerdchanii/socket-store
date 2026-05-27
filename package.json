@@ -27,6 +27,9 @@
     "example:client": "vite examples/basic",
     "example:server": "node examples/basic/server.mjs",
     "example:typecheck": "tsc -p examples/basic/tsconfig.json",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs",
     "type-test": "tsc -p tsconfig.test-d.json",
     "test": "vitest run",
     "lint": "npm run typecheck && npm run example:typecheck",
@@ -54,6 +57,7 @@
     "@types/ws": "^8.18.1",
     "typescript": "^5.9.3",
     "vite": "^8.0.14",
+    "vitepress": "2.0.0-alpha.17",
     "vitest": "^4.1.7",
     "ws": "^8.21.0"
   }
