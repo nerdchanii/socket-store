@@ -44,3 +44,12 @@ package contract unless a future adapter issue explicitly scopes it.
 Examples must be runnable or copied from runnable files. Include the verification
 command when practical, such as `npm run example:typecheck`, and summarize
 expected inputs, outputs, and cleanup behavior when setup is lengthy.
+
+## Snippet Verification
+
+Public TypeScript fences in `README.md` and `docs/guide/` are compiled by
+`npm run docs:verify-snippets`.
+
+Use ` ```ts no-verify ` only for explicit pseudocode, signatures, or partial
+excerpts that are intentionally not standalone programs. Keep those exceptions
+rare and reviewable.

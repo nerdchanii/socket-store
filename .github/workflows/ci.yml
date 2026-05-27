@@ -41,6 +41,9 @@ jobs:
       - name: Example typecheck
         run: npm run example:typecheck
 
+      - name: Verify public doc snippets
+        run: npm run docs:verify-snippets
+
       - name: Type-level tests
         run: npm run type-test
 

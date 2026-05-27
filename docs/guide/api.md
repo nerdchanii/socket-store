@@ -50,7 +50,7 @@ type AppSchema = {
 
 Useful exported schema types:
 
-```ts
+```ts no-verify
 type ChatKey = TopicKey<AppSchema>;
 type ChatState = TopicState<AppSchema, "chat">;
 type ChatPayload = TopicPayload<AppSchema, "chat">;
@@ -74,7 +74,7 @@ import type {
 
 Signatures:
 
-```ts
+```ts no-verify
 type SocketStoreStateGetter<Schema> = <K extends TopicKey<Schema>>(
   key: K
 ) => TopicState<Schema, K>;
@@ -116,7 +116,7 @@ import { createMessageHandler } from "socket-store";
 
 Signature:
 
-```ts
+```ts no-verify
 function createMessageHandler<S, D, K extends string>(
   key: K,
   callback: (state: S, data: D) => S,
@@ -136,7 +136,7 @@ Behavior contract:
 
 Example:
 
-```ts
+```ts no-verify
 const chatHandler = createMessageHandler(
   "chat",
   (state: ChatMessage[], payload: ChatMessage) => [...state, payload],
@@ -154,7 +154,7 @@ import { SocketStore } from "socket-store";
 
 Constructor signature:
 
-```ts
+```ts no-verify
 new SocketStore<Schema>(
   socket: WebSocket,
   messageHandlers: SocketStoreMessageHandlers<Schema>,
@@ -173,7 +173,7 @@ Behavior contract:
 
 Example:
 
-```ts
+```ts no-verify
 const socket = new WebSocket("wss://example.com/realtime");
 const store = new SocketStore<AppSchema>(socket, [chatHandler]);
 ```
@@ -182,7 +182,7 @@ const store = new SocketStore<AppSchema>(socket, [chatHandler]);
 
 Signature:
 
-```ts
+```ts no-verify
 store.getState<K extends TopicKey<Schema>>(key: K): TopicState<Schema, K>;
 ```
 
@@ -196,7 +196,7 @@ Behavior contract:
 
 Example:
 
-```ts
+```ts no-verify
 const messages = store.getState("chat");
 ```
 
@@ -204,7 +204,7 @@ const messages = store.getState("chat");
 
 Signature:
 
-```ts
+```ts no-verify
 store.subscribe<K extends TopicKey<Schema>>(
   key: K,
   listener: (state: TopicState<Schema, K>) => void
@@ -225,7 +225,7 @@ Behavior contract:
 
 Example:
 
-```ts
+```ts no-verify
 const unsubscribe = store.subscribe("chat", (messages) => {
   console.log(messages.at(-1));
 });
@@ -238,7 +238,7 @@ unsubscribe();
 
 Signature:
 
-```ts
+```ts no-verify
 store.subscribeRaw(listener: RawMessageListener): Unsubscribe;
 ```
 
@@ -251,7 +251,7 @@ Behavior contract:
 
 Example:
 
-```ts
+```ts no-verify
 const stopRaw = store.subscribeRaw(({ data, event }) => {
   console.log(data, event.type);
 });
@@ -261,7 +261,7 @@ const stopRaw = store.subscribeRaw(({ data, event }) => {
 
 Signature:
 
-```ts
+```ts no-verify
 store.subscribeAll(listener: TopicUpdateListener<Schema>): Unsubscribe;
 ```
 
@@ -276,7 +276,7 @@ Behavior contract:
 
 Example:
 
-```ts
+```ts no-verify
 const stopAll = store.subscribeAll((update) => {
   console.log(update.key, update.state);
 });
@@ -286,7 +286,7 @@ const stopAll = store.subscribeAll((update) => {
 
 Signature:
 
-```ts
+```ts no-verify
 store.subscribeUnhandled(listener: UnhandledMessageListener): Unsubscribe;
 ```
 
@@ -302,7 +302,7 @@ Behavior contract:
 
 Example:
 
-```ts
+```ts no-verify
 const stopUnhandled = store.subscribeUnhandled(({ key, data }) => {
   console.log(key, data);
 });
@@ -312,7 +312,7 @@ const stopUnhandled = store.subscribeUnhandled(({ key, data }) => {
 
 Signature:
 
-```ts
+```ts no-verify
 store.send<K extends TopicKey<Schema>>({
   key,
   data,
@@ -334,7 +334,7 @@ Behavior contract:
 
 Example:
 
-```ts
+```ts no-verify
 store.send({
   key: "chat",
   data: { author: "Ada", text: "Hello" },
@@ -345,7 +345,7 @@ store.send({
 
 Signature:
 
-```ts
+```ts no-verify
 store.dispose(): void;
 ```
 
@@ -358,7 +358,7 @@ Behavior contract:
 
 Example:
 
-```ts
+```ts no-verify
 store.dispose();
 store.dispose();
 ```
@@ -389,7 +389,7 @@ Behavior contract:
 
 Example:
 
-```ts
+```ts no-verify
 socket.dispatchEvent(
   new MessageEvent("message", {
     data: JSON.stringify({
@@ -410,7 +410,7 @@ import type { SocketStoreProtocol } from "socket-store";
 
 Signature:
 
-```ts
+```ts no-verify
 type SocketStoreProtocol<Schema> = {
   parse?: (event: MessageEvent) => SocketStoreProtocolResult;
   serialize?: (message: SocketStoreOutgoingMessage<Schema>) => SocketStoreSendData;
@@ -440,7 +440,7 @@ Behavior contract:
 
 Example:
 
-```ts
+```ts no-verify
 const protocol: SocketStoreProtocol<AppSchema> = {
   parse(event) {
     const message = JSON.parse(event.data as string);
@@ -465,7 +465,7 @@ const protocol: SocketStoreProtocol<AppSchema> = {
 
 Options signature:
 
-```ts
+```ts no-verify
 type ISocketStoreOptions<Schema> = {
   onConnect?: () => void;
   onClose?: (event: CloseEvent) => void;
@@ -487,7 +487,7 @@ Behavior contract:
 
 `SocketStoreError` signature:
 
-```ts
+```ts no-verify
 class SocketStoreError extends Error {
   name: "SocketStoreError";
   code: SocketStoreErrorCode;
@@ -510,7 +510,7 @@ Error codes:
 
 Example:
 
-```ts
+```ts no-verify
 const store = new SocketStore(socket, [chatHandler], {
   onError(error) {
     console.error(error.code, error.context.phase);

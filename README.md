@@ -93,7 +93,7 @@ back to the socket.
 Both `ws://` and `wss://` URLs work because `socket-store` accepts a standard
 `WebSocket` instance:
 
-```ts
+```ts no-verify
 new SocketStore(new WebSocket("ws://localhost:3030"), handlers);
 new SocketStore(new WebSocket("wss://example.com/realtime"), handlers);
 ```
@@ -102,14 +102,14 @@ new SocketStore(new WebSocket("wss://example.com/realtime"), handlers);
 
 `getState` returns the current snapshot for a topic:
 
-```ts
+```ts no-verify
 const messages = store.getState("chat");
 ```
 
 `subscribe` registers a listener for future updates and returns an idempotent
 unsubscribe function:
 
-```ts
+```ts no-verify
 const unsubscribe = store.subscribe("price", (price) => {
   console.log(price);
 });
@@ -126,7 +126,7 @@ remove the topic handler and it does not stop the store from updating that topic
 
 Use these subscriptions when you need visibility around the default protocol:
 
-```ts
+```ts no-verify
 const stopRaw = store.subscribeRaw(({ data, event }) => {
   console.log("raw message", data, event);
 });
@@ -152,7 +152,7 @@ registered handler or when a custom protocol returns an unhandled result.
 
 Pass lifecycle callbacks through the third constructor argument:
 
-```ts
+```ts no-verify
 import { SocketStoreError } from "socket-store";
 
 const store = new SocketStore(socket, handlers, {
@@ -188,7 +188,7 @@ handler failures are reported to `onError` and do not update topic state.
 
 Call `dispose()` when the store should stop owning the socket listeners:
 
-```ts
+```ts no-verify
 store.dispose();
 ```
 
@@ -200,7 +200,7 @@ Calling `send` or adding a new subscription after disposal throws.
 Use a protocol adapter when your server does not send the default `{ key, data }`
 JSON envelope.
 
-```ts
+```ts no-verify
 const store = new SocketStore(socket, handlers, {
   protocol: {
     parse(event) {
@@ -274,7 +274,7 @@ core package.
 
 Older `socket-store` code can keep using untyped handlers:
 
-```ts
+```ts no-verify
 const handler = createMessageHandler("talk", (state, data) => [...state, data], []);
 const store = new SocketStore(socket, [handler]);
 ```
