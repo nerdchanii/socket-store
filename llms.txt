@@ -6,6 +6,8 @@ handlers turn payloads into local snapshots.
 
 Canonical docs:
 
+- Public docs site:
+  `https://nerdchanii.github.io/socket-store/`
 - Overview, install, lifecycle, migration notes, and non-goals:
   `README.md`
 - Public API contract, runtime semantics, type contracts, error behavior, and

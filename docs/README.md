@@ -1,8 +1,8 @@
 # Documentation Structure
 
-This directory is the source of truth for future `socket-store` documentation.
-Until a documentation site is generated, keep pages here in the same structure
-the site will expose.
+This directory is the source of truth for the `socket-store` documentation site
+published at <https://nerdchanii.github.io/socket-store/>. Keep pages here in
+the same structure the site exposes.
 
 ## Intended Layout
 
@@ -32,3 +32,7 @@ non-goals. They should be suitable for npm users and GitHub readers.
 Agent-facing docs are public only when they describe stable package context or
 canonical links. They must not expose private planning notes or imply support
 for features that are still deferred.
+
+GitHub Pages deploys the VitePress output from `docs/guide/`, using the
+`/socket-store/` project-site base path. Maintainer notes in `docs/project/`
+are not part of that VitePress source tree and are not deployed.
