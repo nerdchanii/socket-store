@@ -51,14 +51,11 @@ type AppSchema = {
 Useful exported schema types:
 
 ```ts
-type TopicKey<Schema> = keyof Schema & string;
-type TopicState<Schema, K> = Schema[K]["state"];
-type TopicPayload<Schema, K> = Schema[K]["payload"];
-type TopicHandler<Schema, K> = (
-  state: TopicState<Schema, K>,
-  payload: TopicPayload<Schema, K>
-) => TopicState<Schema, K>;
-type TopicUpdate<Schema> = { key; data; state };
+type ChatKey = TopicKey<AppSchema>;
+type ChatState = TopicState<AppSchema, "chat">;
+type ChatPayload = TopicPayload<AppSchema, "chat">;
+type ChatHandler = TopicHandler<AppSchema, "chat">;
+type AppUpdate = TopicUpdate<AppSchema>;
 ```
 
 ## createMessageHandler
