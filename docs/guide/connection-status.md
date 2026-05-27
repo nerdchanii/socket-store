@@ -1,12 +1,12 @@
 # Connection Status Model
 
-`socket-store` does not currently expose a connection status API. This page
-defines the public status model that future runtime APIs should follow before
-status subscriptions, React hooks, or reconnect behavior are implemented.
+`socket-store` exposes a framework-agnostic connection status API. Use
+`getStatus()` for the current snapshot and `subscribeStatus(listener)` for
+future status changes.
 
 ## Status Values
 
-Future status APIs should use these public values:
+Status APIs use these public values:
 
 - `connecting`: the store has a WebSocket that has not opened yet. This covers
   the initial native `CONNECTING` state only.
@@ -35,6 +35,10 @@ connecting -> open -> closing -> closed
 If a store starts observing a WebSocket that is already `OPEN`, the initial
 public status is `open`.
 
+The runtime API maps the socket's initial native `readyState` to public status:
+`CONNECTING` becomes `connecting`, `OPEN` becomes `open`, `CLOSING` becomes
+`closing`, and `CLOSED` becomes `closed`.
+
 If the socket closes before `open`, the status becomes `closed` unless a future
 opt-in reconnect policy schedules another attempt.
 
@@ -62,7 +66,7 @@ the following `close` event or reconnect policy decides whether the public
 status becomes `closed`, `reconnecting`, or `error`.
 
 `send` while not `open` keeps its current behavior: it throws
-`ERR_SOCKET_NOT_OPEN`. A future status API must not imply message buffering.
+`ERR_SOCKET_NOT_OPEN`. Status APIs do not imply message buffering.
 
 ## Internal Details
 

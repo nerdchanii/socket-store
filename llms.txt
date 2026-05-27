@@ -52,9 +52,9 @@ Non-goals:
 - socket-store is not a React hook package, RPC framework, CRDT engine,
   persistence layer, reconnection manager, byte-level stream parser, MCP
   docs-query integration, or A2A protocol implementation.
-- Connection status APIs are not implemented yet. Future status work should
-  follow `docs/guide/connection-status.md` and must keep reconnect explicit and
-  opt-in.
+- Connection status APIs are implemented as framework-agnostic `getStatus()`
+  and `subscribeStatus(listener)`. Future reconnect work must remain explicit
+  and opt-in.
 
 Before changing docs, prefer source-backed claims from `src/`, tests, and the
 runnable example. Mark behavior as unsupported or undecided when the source and
