@@ -228,7 +228,7 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
   };
 
   getStatus = (): SocketStoreConnectionStatus => {
-    return this.status;
+    return this.getCurrentStatus();
   };
 
   subscribe = <K extends TopicKey<Schema>>(
@@ -380,6 +380,14 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
   }
 
   private getInitialStatus(): SocketStoreConnectionStatus {
+    return this.getStatusFromReadyState() ?? "connecting";
+  }
+
+  private getCurrentStatus(): SocketStoreConnectionStatus {
+    return this.getStatusFromReadyState() ?? this.status;
+  }
+
+  private getStatusFromReadyState(): SocketStoreConnectionStatus | undefined {
     if (this.socket.readyState === 1) {
       return "open";
     }
@@ -392,7 +400,7 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
       return "closed";
     }
 
-    return "connecting";
+    return undefined;
   }
 
   private setStatus(status: SocketStoreConnectionStatus) {

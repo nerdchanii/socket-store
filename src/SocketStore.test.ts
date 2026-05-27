@@ -33,7 +33,19 @@ class FakeWebSocket {
     this.sent.push(data);
   }
 
+  close() {
+    this.readyState = FakeWebSocket.CLOSING;
+  }
+
   dispatch(type: string, event: Record<string, unknown> = {}) {
+    if (type === "open") {
+      this.readyState = FakeWebSocket.OPEN;
+    }
+
+    if (type === "close") {
+      this.readyState = FakeWebSocket.CLOSED;
+    }
+
     const listeners = [...(this.listeners.get(type) ?? [])];
     listeners.forEach((listener) => listener(event));
   }
@@ -99,6 +111,14 @@ describe("SocketStore", () => {
     expect(listener).toHaveBeenCalledTimes(2);
     expect(listener.mock.calls.map((call) => call[0])).toEqual(["open", "closed"]);
     expect(store.getStatus()).toBe("closed");
+  });
+
+  it("reflects native closing readyState in the current status snapshot", () => {
+    const { socket, store } = createStore();
+
+    socket.close();
+
+    expect(store.getStatus()).toBe("closing");
   });
 
   it("returns idempotent unsubscribe functions from status subscriptions", () => {
