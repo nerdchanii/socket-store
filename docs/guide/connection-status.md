@@ -10,7 +10,8 @@ Future status APIs should use these public values:
 
 - `connecting`: the store has a WebSocket that has not opened yet. This covers
   the initial native `CONNECTING` state only.
-- `open`: the WebSocket has emitted `open` and can send messages.
+- `open`: the WebSocket has emitted `open` or was already in the native `OPEN`
+  ready state when the store started observing it, and can send messages.
 - `closing`: close has started, either because the native socket is closing or a
   future store-owned close operation has begun.
 - `closed`: the connection is fully closed and no retry is pending.
@@ -25,11 +26,14 @@ Protocol, routing, handler, socket, and send failures should continue to use
 
 ## Transitions
 
-The initial transition is:
+The initial transition for a newly created WebSocket is:
 
 ```txt
 connecting -> open -> closing -> closed
 ```
+
+If a store starts observing a WebSocket that is already `OPEN`, the initial
+public status is `open`.
 
 If the socket closes before `open`, the status becomes `closed` unless a future
 opt-in reconnect policy schedules another attempt.
