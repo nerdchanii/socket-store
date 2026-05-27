@@ -15,7 +15,8 @@ the site will expose.
 - `docs/agents/`: LLM-readable package context, indexes, structured metadata,
   and agent-facing guides such as `agent-context.json` and `guide.md`.
 - `docs/project/`: maintainer-facing planning notes that should not be treated
-  as public package documentation.
+  as public package documentation, including the
+  [branch policy](./project/branch-policy.md).
 
 Root files keep their existing roles: `README.md` is the concise package
 overview, `llms.txt` is the future high-signal agent index, and `examples/`
