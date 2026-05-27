@@ -19,6 +19,8 @@
     "example": "example"
   },
   "scripts": {
+    "changeset": "changeset",
+    "changeset:version": "changeset version",
     "dev": "vite",
     "build": "npm run build:esm && npm run build:cjs",
     "build:esm": "tsc",
@@ -30,6 +32,7 @@
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs",
+    "release:intent": "node scripts/check-release-intent.mjs",
     "type-test": "tsc -p tsconfig.test-d.json",
     "test": "vitest run",
     "lint": "npm run typecheck && npm run example:typecheck",
@@ -54,6 +57,7 @@
   "author": "nerdchanii <nerdchanii@gmail.com>",
   "license": "MIT",
   "devDependencies": {
+    "@changesets/cli": "^2.31.0",
     "@types/ws": "^8.18.1",
     "typescript": "^5.9.3",
     "vite": "^8.0.14",

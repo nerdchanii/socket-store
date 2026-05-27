@@ -13,6 +13,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -22,6 +24,16 @@ jobs:
 
       - name: Install
         run: npm ci
+
+      - name: Verify release intent
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          PR_BODY="$(gh api repos/${{ github.repository }}/pulls/$PR_NUMBER --jq .body)"
+          export PR_BODY
+          npm run release:intent -- --base ${{ github.event.pull_request.base.sha }} --head ${{ github.event.pull_request.head.sha }}
 
       - name: Typecheck
         run: npm run typecheck
