@@ -31,10 +31,11 @@ environment. Publish cannot run until the workflow completes:
 - `npm run docs:build`
 - `npm run pack:dry-run`
 
-The publish command is `npm publish --provenance`. The workflow grants
-`id-token: write` so npm provenance can be attached through GitHub Actions. The
-npm package should use trusted publishing for this repository workflow instead
-of a long-lived npm token.
+The publish command is `npx changeset publish` with
+`NPM_CONFIG_PROVENANCE=true`. The workflow grants `id-token: write` so npm
+provenance can be attached through GitHub Actions. The npm package should use
+trusted publishing for this repository workflow instead of a long-lived npm
+token.
 
 ## Tags And GitHub Releases
 
