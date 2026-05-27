@@ -28,8 +28,12 @@ jobs:
       - name: Verify release intent
         if: github.event_name == 'pull_request'
         env:
-          PR_BODY: ${{ github.event.pull_request.body }}
-        run: npm run release:intent -- --base ${{ github.event.pull_request.base.sha }} --head ${{ github.event.pull_request.head.sha }}
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          PR_BODY="$(gh api repos/${{ github.repository }}/pulls/$PR_NUMBER --jq .body)"
+          export PR_BODY
+          npm run release:intent -- --base ${{ github.event.pull_request.base.sha }} --head ${{ github.event.pull_request.head.sha }}
 
       - name: Typecheck
         run: npm run typecheck
