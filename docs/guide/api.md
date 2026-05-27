@@ -336,6 +336,9 @@ Behavior contract:
 - Non-string message data reports `ERR_UNSUPPORTED_MESSAGE_DATA`.
 - Invalid JSON reports `ERR_INVALID_JSON`.
 - JSON values without a string `key` report `ERR_MALFORMED_ENVELOPE`.
+- The exported `SocketStoreEnvelope` type models `data` as present, but runtime
+  handling for envelopes that omit `data` is undecided and should not be relied
+  on.
 - Unknown topic keys notify unhandled subscribers, report `ERR_UNKNOWN_TOPIC`,
   and do not update topic state.
 
@@ -485,6 +488,8 @@ const store = new SocketStore(socket, [chatHandler], {
 Undecided behavior:
 
 - Runtime `getState` for unknown keys is not a supported contract.
+- Runtime handling for default envelopes that omit `data` is not a supported
+  contract.
 - Listener exception handling is not wrapped by `SocketStore`; do not rely on
   listener failures being converted to `SocketStoreError`.
 - The package accepts any `WebSocket`-compatible object at runtime, but the
