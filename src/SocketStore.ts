@@ -48,11 +48,16 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
   private status: SocketStoreConnectionStatus;
   options = {} as ISocketStoreOptions<Schema>;
   private disposed = false;
+  private readonly originalClose: WebSocket["close"];
   private readonly handleOpen = () => this.onConnect();
   private readonly handleMessage = (event: MessageEvent) =>
     this.onMessage(event);
   private readonly handleError = (event: Event) => this.onError(event);
   private readonly handleClose = (event: CloseEvent) => this.onClose(event);
+  private readonly handleCloseRequest = (code?: number, reason?: string) => {
+    this.setStatus("closing");
+    this.originalClose.call(this.socket, code, reason);
+  };
 
   constructor(
     protected socket: WebSocket,
@@ -66,6 +71,7 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
     this.unhandledListeners = [];
     this.statusListeners = [];
     this.status = this.getInitialStatus();
+    this.originalClose = this.socket.close;
 
     const handlers = messageHandlers as Array<MessageHandler<any, any>>;
     this.store = handlers.reduce((acc, cur) => {
@@ -85,6 +91,7 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
     this.socket.addEventListener("message", this.handleMessage);
     this.socket.addEventListener("error", this.handleError);
     this.socket.addEventListener("close", this.handleClose);
+    this.socket.close = this.handleCloseRequest;
   }
 
   onConnect() {
@@ -371,6 +378,7 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
     this.socket.removeEventListener("message", this.handleMessage);
     this.socket.removeEventListener("error", this.handleError);
     this.socket.removeEventListener("close", this.handleClose);
+    this.socket.close = this.originalClose;
   };
 
   private assertActive(action: "send" | "subscribe") {

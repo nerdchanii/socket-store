@@ -121,6 +121,20 @@ describe("SocketStore", () => {
     expect(store.getStatus()).toBe("closing");
   });
 
+  it("notifies status subscribers when the provided socket starts closing", () => {
+    const { socket, store } = createStore();
+    const listener = vi.fn();
+
+    store.subscribeStatus(listener);
+    socket.close();
+    socket.dispatch("close");
+
+    expect(listener.mock.calls.map((call) => call[0])).toEqual([
+      "closing",
+      "closed",
+    ]);
+  });
+
   it("returns idempotent unsubscribe functions from status subscriptions", () => {
     const { socket, store } = createStore(undefined, FakeWebSocket.CONNECTING);
     const listener = vi.fn();
@@ -733,10 +747,12 @@ describe("SocketStore", () => {
 
   it("removes native listeners and clears subscriptions on dispose", () => {
     const listener = vi.fn();
+    const statusListener = vi.fn();
     const onConnect = vi.fn();
     const { socket, store } = createStore({ onConnect });
 
     store.subscribe("chat", listener);
+    store.subscribeStatus(statusListener);
     expect(socket.listenerCount("open")).toBe(1);
     expect(socket.listenerCount("message")).toBe(1);
 
@@ -753,6 +769,7 @@ describe("SocketStore", () => {
 
     expect(onConnect).not.toHaveBeenCalled();
     expect(listener).not.toHaveBeenCalled();
+    expect(statusListener).not.toHaveBeenCalled();
     expect(store.getState("chat")).toEqual([]);
   });
 
@@ -772,6 +789,9 @@ describe("SocketStore", () => {
       "Cannot subscribe after SocketStore has been disposed"
     );
     expect(() => store.subscribeUnhandled(() => undefined)).toThrow(
+      "Cannot subscribe after SocketStore has been disposed"
+    );
+    expect(() => store.subscribeStatus(() => undefined)).toThrow(
       "Cannot subscribe after SocketStore has been disposed"
     );
     expect(() => store.send({ key: "chat", data: "hello" })).toThrow(
