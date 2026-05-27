@@ -16,7 +16,8 @@ the site will expose.
   and agent-facing guides such as `agent-context.json` and `guide.md`.
 - `docs/project/`: maintainer-facing planning notes that should not be treated
   as public package documentation, including the
-  [branch policy](./project/branch-policy.md).
+  [branch policy](./project/branch-policy.md) and
+  [release pipeline](./project/release-pipeline.md).
 
 Root files keep their existing roles: `README.md` is the concise package
 overview, `llms.txt` is the future high-signal agent index, and `examples/`
