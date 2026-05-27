@@ -252,26 +252,37 @@ describe("SocketStore", () => {
     ]);
   });
 
-  it("throws a SocketStoreError before sending when the socket is not open", () => {
-    const { socket, store } = createStore();
-    socket.readyState = 0;
+  it.each([
+    ["connecting", FakeWebSocket.CONNECTING],
+    ["closing", FakeWebSocket.CLOSING],
+    ["closed", FakeWebSocket.CLOSED],
+  ])(
+    "rejects send without queueing while the socket is %s",
+    (_status, readyState) => {
+      const serialize = vi.fn(({ key, data }) => JSON.stringify({ key, data }));
+      const { socket, store } = createStore({
+        protocol: { serialize },
+      });
+      socket.readyState = readyState;
 
-    let error: unknown;
-    try {
-      store.send({ key: "chat", data: "hello" });
-    } catch (caught) {
-      error = caught;
+      let error: unknown;
+      try {
+        store.send({ key: "chat", data: "hello" });
+      } catch (caught) {
+        error = caught;
+      }
+
+      expect(error).toBeInstanceOf(SocketStoreError);
+      expect((error as SocketStoreError).code).toBe("ERR_SOCKET_NOT_OPEN");
+      expect((error as SocketStoreError).context).toMatchObject({
+        phase: "send",
+        key: "chat",
+        data: "hello",
+      });
+      expect(serialize).not.toHaveBeenCalled();
+      expect(socket.sent).toEqual([]);
     }
-
-    expect(error).toBeInstanceOf(SocketStoreError);
-    expect((error as SocketStoreError).code).toBe("ERR_SOCKET_NOT_OPEN");
-    expect((error as SocketStoreError).context).toMatchObject({
-      phase: "send",
-      key: "chat",
-      data: "hello",
-    });
-    expect(socket.sent).toEqual([]);
-  });
+  );
 
   it("returns idempotent unsubscribe functions from subscribe", () => {
     const { socket, store } = createStore();
