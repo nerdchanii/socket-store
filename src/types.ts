@@ -90,6 +90,24 @@ export type SocketStoreSubscriber<
   listener: TopicStateListener<Schema, K>
 ) => Unsubscribe;
 
+export type SocketStoreConnectionStatus =
+  | "connecting"
+  | "open"
+  | "closing"
+  | "closed"
+  | "reconnecting"
+  | "error";
+
+export type SocketStoreStatusListener = (
+  status: SocketStoreConnectionStatus
+) => void;
+
+export type SocketStoreStatusGetter = () => SocketStoreConnectionStatus;
+
+export type SocketStoreStatusSubscriber = (
+  listener: SocketStoreStatusListener
+) => Unsubscribe;
+
 /** Minimal public SocketStore surface needed by framework adapters. */
 export interface SocketStoreAdapterContract<
   Schema extends SocketSchema = DefaultSchema
@@ -97,6 +115,8 @@ export interface SocketStoreAdapterContract<
   send: SocketStoreSender<Schema>;
   getState: SocketStoreStateGetter<Schema>;
   subscribe: SocketStoreSubscriber<Schema>;
+  getStatus: SocketStoreStatusGetter;
+  subscribeStatus: SocketStoreStatusSubscriber;
 }
 
 /** JSON string envelope supported by the v1 default protocol. */
@@ -245,6 +265,8 @@ export interface ISocketStore<Schema extends SocketSchema = DefaultSchema> {
    */
   getState: SocketStoreStateGetter<Schema>;
   subscribe: SocketStoreSubscriber<Schema>;
+  getStatus: SocketStoreStatusGetter;
+  subscribeStatus(listener: SocketStoreStatusListener): Unsubscribe;
   subscribeRaw(listener: RawMessageListener): Unsubscribe;
   subscribeAll(listener: TopicUpdateListener<Schema>): Unsubscribe;
   subscribeUnhandled(listener: UnhandledMessageListener): Unsubscribe;

@@ -7,6 +7,8 @@ import {
   RawSocketStoreMessage,
   SocketSchema,
   SocketStoreError,
+  SocketStoreConnectionStatus,
+  SocketStoreStatusListener,
   SocketStoreEnvelope,
   SocketStoreMessageHandlers,
   SocketStoreOutgoingMessage,
@@ -42,6 +44,8 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
   private rawListeners: Array<ListenerEntry<RawMessageListener>>;
   private allTopicListeners: Array<ListenerEntry<TopicUpdateListener<Schema>>>;
   private unhandledListeners: Array<ListenerEntry<UnhandledMessageListener>>;
+  private statusListeners: Array<ListenerEntry<SocketStoreStatusListener>>;
+  private status: SocketStoreConnectionStatus;
   options = {} as ISocketStoreOptions<Schema>;
   private disposed = false;
   private readonly handleOpen = () => this.onConnect();
@@ -60,6 +64,8 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
     this.rawListeners = [];
     this.allTopicListeners = [];
     this.unhandledListeners = [];
+    this.statusListeners = [];
+    this.status = this.getInitialStatus();
 
     const handlers = messageHandlers as Array<MessageHandler<any, any>>;
     this.store = handlers.reduce((acc, cur) => {
@@ -85,6 +91,8 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
     if (this.disposed) {
       return;
     }
+
+    this.setStatus("open");
 
     if (this.options.onConnect) {
       this.options.onConnect();
@@ -160,6 +168,7 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
       return;
     }
 
+    this.setStatus("closed");
     this.options.onClose?.(event);
   };
 
@@ -218,6 +227,10 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
     return this.store[key as string].state;
   };
 
+  getStatus = (): SocketStoreConnectionStatus => {
+    return this.status;
+  };
+
   subscribe = <K extends TopicKey<Schema>>(
     key: K,
     listener: (state: TopicState<Schema, K>) => void
@@ -235,6 +248,23 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
 
       subscribed = false;
       this.listeners = this.listeners.filter((current) => current !== entry);
+    };
+  };
+
+  subscribeStatus = (listener: SocketStoreStatusListener): Unsubscribe => {
+    this.assertActive("subscribe");
+
+    const entry = { listener };
+    this.statusListeners.push(entry);
+
+    let subscribed = true;
+    return () => {
+      if (!subscribed) {
+        return;
+      }
+
+      subscribed = false;
+      this.statusListeners = this.statusListeners.filter((current) => current !== entry);
     };
   };
 
@@ -319,6 +349,13 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
     });
   };
 
+  private notifyStatus = () => {
+    const snapshot = [...this.statusListeners];
+    snapshot.forEach(({ listener }) => {
+      listener(this.status);
+    });
+  };
+
   dispose = () => {
     if (this.disposed) {
       return;
@@ -329,6 +366,7 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
     this.rawListeners = [];
     this.allTopicListeners = [];
     this.unhandledListeners = [];
+    this.statusListeners = [];
     this.socket.removeEventListener("open", this.handleOpen);
     this.socket.removeEventListener("message", this.handleMessage);
     this.socket.removeEventListener("error", this.handleError);
@@ -339,6 +377,31 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
     if (this.disposed) {
       throw new Error(`Cannot ${action} after SocketStore has been disposed`);
     }
+  }
+
+  private getInitialStatus(): SocketStoreConnectionStatus {
+    if (this.socket.readyState === 1) {
+      return "open";
+    }
+
+    if (this.socket.readyState === 2) {
+      return "closing";
+    }
+
+    if (this.socket.readyState === 3) {
+      return "closed";
+    }
+
+    return "connecting";
+  }
+
+  private setStatus(status: SocketStoreConnectionStatus) {
+    if (this.status === status) {
+      return;
+    }
+
+    this.status = status;
+    this.notifyStatus();
   }
 
   private isEnvelope(value: unknown): value is SocketStoreEnvelope {
