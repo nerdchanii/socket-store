@@ -17,7 +17,7 @@
     },
     {
       "path": "docs/guide/reconnect.md",
-      "covers": ["proposed reconnect option shape", "retry limits", "backoff choices", "close behavior", "auth and session boundaries", "implementation boundaries"]
+      "covers": ["proposed reconnect option shape", "retry limits", "backoff choices", "close behavior", "auth and session boundaries", "advanced reconnect placement", "implementation boundaries"]
     },
     {
       "path": "docs/guide/example.md",
@@ -96,7 +96,7 @@
     "RPC framework",
     "CRDT or collaborative editing engine",
     "persistence layer",
-    "reconnection manager",
+    "advanced reconnection manager",
     "byte-level stream parser",
     "MCP docs-query integration",
     "A2A protocol implementation"

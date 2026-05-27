@@ -84,8 +84,8 @@ These details are not part of the public model:
 - Browser numeric `WebSocket.readyState` values.
 - Backoff timers, retry counters, jitter, or socket factory internals.
 - Authentication refresh and session recovery decisions.
-- Whether future reconnect support belongs in `socket-store`,
-  `react-socket-store`, or `realtime-kit`.
+- Advanced reconnect orchestration that belongs in future `realtime-kit`
+  planning, such as reachability, replay, queues, and app-wide session policy.
 
 Ambiguous states such as `paused`, `offline`, `retrying`, `failed`, and
 `degraded` are deferred until a concrete runtime API requires them.

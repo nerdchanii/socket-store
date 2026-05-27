@@ -16,7 +16,8 @@ test inspection.
   close/error semantics, and deferred reconnect details.
 - [Reconnect Configuration Design](/reconnect): proposed opt-in reconnect
   configuration shape, retry/backoff semantics, close behavior,
-  auth/session boundaries, and scope boundaries before runtime implementation.
+  auth/session boundaries, and the advanced reconnect boundary with future
+  `realtime-kit` planning before runtime implementation.
 - [Runnable Example](/example): clean-checkout setup, expected WebSocket
   messages, browser behavior, and cleanup.
 - [Agent-Readable Docs](/agents): public index for `llms.txt`,
