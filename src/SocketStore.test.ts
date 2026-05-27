@@ -5,7 +5,10 @@ import type { SocketStoreSendData } from "./index";
 type Listener = (event: any) => void;
 
 class FakeWebSocket {
+  static readonly CONNECTING = 0;
   static readonly OPEN = 1;
+  static readonly CLOSING = 2;
+  static readonly CLOSED = 3;
 
   readyState = FakeWebSocket.OPEN;
   sent: SocketStoreSendData[] = [];
@@ -40,8 +43,12 @@ class FakeWebSocket {
   }
 }
 
-function createStore(options?: ConstructorParameters<typeof SocketStore>[2]) {
+function createStore(
+  options?: ConstructorParameters<typeof SocketStore>[2],
+  readyState = FakeWebSocket.OPEN
+) {
   const socket = new FakeWebSocket();
+  socket.readyState = readyState;
   const store = new SocketStore(
     socket as unknown as WebSocket,
     [
@@ -65,6 +72,49 @@ describe("SocketStore", () => {
     });
 
     expect(store.getState("chat")).toEqual(["hello"]);
+  });
+
+  it("exposes the initial connection status snapshot", () => {
+    expect(createStore(undefined, FakeWebSocket.CONNECTING).store.getStatus()).toBe(
+      "connecting"
+    );
+    expect(createStore(undefined, FakeWebSocket.OPEN).store.getStatus()).toBe("open");
+    expect(createStore(undefined, FakeWebSocket.CLOSING).store.getStatus()).toBe(
+      "closing"
+    );
+    expect(createStore(undefined, FakeWebSocket.CLOSED).store.getStatus()).toBe(
+      "closed"
+    );
+  });
+
+  it("notifies status subscribers when the socket opens and closes", () => {
+    const { socket, store } = createStore(undefined, FakeWebSocket.CONNECTING);
+    const listener = vi.fn();
+
+    store.subscribeStatus(listener);
+    socket.dispatch("open");
+    socket.dispatch("open");
+    socket.dispatch("close");
+
+    expect(listener).toHaveBeenCalledTimes(2);
+    expect(listener.mock.calls.map((call) => call[0])).toEqual(["open", "closed"]);
+    expect(store.getStatus()).toBe("closed");
+  });
+
+  it("returns idempotent unsubscribe functions from status subscriptions", () => {
+    const { socket, store } = createStore(undefined, FakeWebSocket.CONNECTING);
+    const listener = vi.fn();
+
+    const unsubscribe = store.subscribeStatus(listener);
+
+    socket.dispatch("open");
+    unsubscribe();
+    unsubscribe();
+    socket.dispatch("close");
+
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(listener).toHaveBeenCalledWith("open");
+    expect(store.getStatus()).toBe("closed");
   });
 
   it("notifies raw message subscribers before parsing", () => {
@@ -582,11 +632,12 @@ describe("SocketStore", () => {
 
   it("wraps native WebSocket error events in SocketStoreError", () => {
     const onError = vi.fn();
-    const { socket } = createStore({ onError });
+    const { socket, store } = createStore({ onError });
     const event = new Event("error");
 
     socket.dispatch("error", event);
 
+    expect(store.getStatus()).toBe("open");
     expect(onError).toHaveBeenCalledWith(expect.any(SocketStoreError));
     expect(onError.mock.calls[0][0]).toMatchObject({
       code: "ERR_SOCKET_ERROR",
