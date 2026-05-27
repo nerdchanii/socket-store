@@ -12,6 +12,8 @@ test inspection.
 
 - [API Contract](/api): source-backed public entry points, runtime semantics,
   type contracts, error behavior, and non-goals.
+- [Connection Status](/connection-status): public status values, transitions,
+  close/error semantics, and deferred reconnect details.
 - [Runnable Example](/example): clean-checkout setup, expected WebSocket
   messages, browser behavior, and cleanup.
 - [Agent-Readable Docs](/agents): public index for `llms.txt`,
