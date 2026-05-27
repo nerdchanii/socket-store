@@ -1,0 +1,101 @@
+{
+  "package": "socket-store",
+  "summary": "A WebSocket-first topic state store that routes complete WebSocket messages by topic and lets handlers turn payloads into local snapshots.",
+  "canonicalDocs": [
+    {
+      "path": "README.md",
+      "covers": ["overview", "install", "core model", "default protocol", "lifecycle", "migration notes", "non-goals"]
+    },
+    {
+      "path": "docs/guide/api.md",
+      "covers": ["public API contract", "runtime semantics", "type contracts", "error behavior", "undecided behavior"]
+    },
+    {
+      "path": "docs/guide/example.md",
+      "covers": ["runnable example setup", "expected message flow", "cleanup behavior"]
+    },
+    {
+      "path": "llms.txt",
+      "covers": ["agent entrypoint", "canonical documentation index"]
+    }
+  ],
+  "publicEntryPoints": [
+    {
+      "name": "SocketStore",
+      "source": "src/SocketStore.ts",
+      "docs": "docs/guide/api.md"
+    },
+    {
+      "name": "createMessageHandler",
+      "source": "src/createMessageHandler.ts",
+      "docs": "docs/guide/api.md"
+    },
+    {
+      "name": "SocketStoreError",
+      "source": "src/types.ts",
+      "docs": "docs/guide/api.md"
+    },
+    {
+      "name": "SocketStoreProtocol",
+      "source": "src/types.ts",
+      "docs": "docs/guide/api.md"
+    },
+    {
+      "name": "schema helper types",
+      "source": "src/types.ts",
+      "docs": "docs/guide/api.md"
+    }
+  ],
+  "importantFiles": [
+    "src/index.ts",
+    "src/SocketStore.ts",
+    "src/createMessageHandler.ts",
+    "src/types.ts",
+    "src/SocketStore.test.ts",
+    "src/schema.test-d.ts",
+    "examples/basic/server.mjs",
+    "examples/basic/src/main.ts",
+    "docs/style-guide.md",
+    "docs/project/check-failure-playbook.md"
+  ],
+  "examples": [
+    {
+      "name": "basic WebSocket topic store",
+      "path": "examples/basic",
+      "docs": "docs/guide/example.md",
+      "verification": "npm run example:typecheck"
+    }
+  ],
+  "responsibilityBoundary": {
+    "socket-store": [
+      "WebSocket message routing",
+      "topic snapshots",
+      "subscriptions",
+      "protocol adapters",
+      "socket lifecycle callbacks",
+      "socket-store error reporting"
+    ],
+    "react-socket-store": [
+      "React hooks",
+      "React render timing",
+      "React Server Component boundaries",
+      "React-specific subscription adapters"
+    ]
+  },
+  "nonGoals": [
+    "React hook package",
+    "RPC framework",
+    "CRDT or collaborative editing engine",
+    "persistence layer",
+    "reconnection manager",
+    "byte-level stream parser",
+    "MCP docs-query integration",
+    "A2A protocol implementation"
+  ],
+  "verificationCommands": [
+    "npm run lint",
+    "npm run type-test",
+    "npm test",
+    "npm run docs:build"
+  ]
+}

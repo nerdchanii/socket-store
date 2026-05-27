@@ -16,6 +16,8 @@ Canonical docs:
   `docs/guide/example.md`
 - Documentation rules for future agent-authored changes:
   `docs/style-guide.md`
+- Machine-readable package context for agents:
+  `docs/agents/agent-context.json`
 - CI and verification troubleshooting:
   `docs/project/check-failure-playbook.md`
 
