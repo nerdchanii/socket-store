@@ -15,10 +15,3 @@ test inspection.
   notes, and non-goals.
 - [Runnable example](https://github.com/nerdchanii/socket-store/tree/main/examples/basic):
   browser client and WebSocket echo server using the default topic envelope.
-
-## Planned Sections
-
-Future public pages should cover the source-backed API contract, runnable
-examples, migration notes, and agent-readable package context. Do not publish
-project maintenance notes from `docs/project/` in this site.
-
