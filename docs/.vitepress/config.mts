@@ -12,6 +12,7 @@ export default defineConfig({
         items: [
           { text: "Overview", link: "/" },
           { text: "API Contract", link: "/api" },
+          { text: "Runnable Example", link: "/example" },
         ],
       },
     ],
