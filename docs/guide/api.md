@@ -58,6 +58,54 @@ type ChatHandler = TopicHandler<AppSchema, "chat">;
 type AppUpdate = TopicUpdate<AppSchema>;
 ```
 
+## Adapter Contract Types
+
+Import path:
+
+```ts
+import type {
+  SocketStoreAdapterContract,
+  SocketStoreSender,
+  SocketStoreStateGetter,
+  SocketStoreSubscriber,
+  TopicStateListener,
+} from "socket-store";
+```
+
+Signatures:
+
+```ts
+type SocketStoreStateGetter<Schema> = <K extends TopicKey<Schema>>(
+  key: K
+) => TopicState<Schema, K>;
+
+type SocketStoreSender<Schema> = <K extends TopicKey<Schema>>(message: {
+  key: K;
+  data: TopicPayload<Schema, K>;
+}) => void;
+
+type SocketStoreSubscriber<Schema> = <K extends TopicKey<Schema>>(
+  key: K,
+  listener: TopicStateListener<Schema, K>
+) => Unsubscribe;
+
+interface SocketStoreAdapterContract<Schema> {
+  send: SocketStoreSender<Schema>;
+  getState: SocketStoreStateGetter<Schema>;
+  subscribe: SocketStoreSubscriber<Schema>;
+}
+```
+
+Behavior contract:
+
+- These types are the public framework-adapter surface for reading topic state,
+  sending typed topic payloads, and subscribing to topic snapshots.
+- They intentionally exclude socket lifecycle methods, raw message listeners,
+  all-topic listeners, unhandled listeners, custom protocol configuration, and
+  internal store storage.
+- Framework adapters should import these types from the package root instead of
+  deep-importing source or generated `dist` files.
+
 ## createMessageHandler
 
 Import path:

@@ -16,6 +16,11 @@ import type {
   SchemaMessageHandler,
   SocketStoreMessageHandlers,
   SendMessage,
+  SocketStoreAdapterContract,
+  SocketStoreSender,
+  SocketStoreStateGetter,
+  SocketStoreSubscriber,
+  TopicStateListener,
   TopicUpdate,
   Unsubscribe,
   MessageHandler,
@@ -75,6 +80,42 @@ send({ key: "chat", data: { author: "bob", text: "hello" } }); // valid
 send({ key: "unknown", data: {} });
 // @ts-expect-error — PriceTick is not valid for the "chat" topic
 send({ key: "chat", data: { symbol: "BTC", value: 1 } });
+
+// Adapter contract types expose the narrow store surface needed by frameworks
+type AppStateGetter = SocketStoreStateGetter<AppSchema>;
+declare const getTopicState: AppStateGetter;
+const _adapterChatState: Message[] = getTopicState("chat");
+// @ts-expect-error — "unknown" is not a key in AppSchema
+getTopicState("unknown");
+
+type AppSender = SocketStoreSender<AppSchema>;
+declare const sendTopicMessage: AppSender;
+sendTopicMessage({ key: "price", data: { symbol: "ETH", value: 2 } });
+// @ts-expect-error — payload must match the selected topic
+sendTopicMessage({ key: "price", data: { author: "bob", text: "hello" } });
+
+type AppTopicListener = TopicStateListener<AppSchema, "price">;
+const _priceListener: AppTopicListener = (price) => {
+  const _price: Price = price;
+};
+// @ts-expect-error — listener receives Price, not Message[]
+const _badPriceListener: AppTopicListener = (_messages: Message[]) => {};
+
+type AppSubscriber = SocketStoreSubscriber<AppSchema>;
+declare const subscribeToTopic: AppSubscriber;
+subscribeToTopic("chat", (messages) => {
+  const _messages: Message[] = messages;
+});
+// @ts-expect-error — listener state must match the topic
+subscribeToTopic("chat", (_price: Price) => {});
+
+declare const adapterStore: SocketStoreAdapterContract<AppSchema>;
+adapterStore.send({ key: "chat", data: { author: "ada", text: "hi" } });
+const _adapterPrice: Price = adapterStore.getState("price");
+const _adapterUnsubscribe: Unsubscribe = adapterStore.subscribe("price", (price) => {
+  const _price: Price = price;
+});
+_adapterUnsubscribe();
 
 // ---------------------------------------------------------------------------
 // 3. MessageHandler type consistency
