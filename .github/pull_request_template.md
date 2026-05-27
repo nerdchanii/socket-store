@@ -26,6 +26,11 @@
 - [ ] Build passes
 - [ ] Docs/examples updated if needed
 
+## Release Intent
+
+- [ ] Changeset added
+- [ ] No release needed (docs/project-only or tooling-only and does not affect consumers)
+
 ## Notes
 
 Related issue:
