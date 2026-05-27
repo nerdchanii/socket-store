@@ -18,6 +18,8 @@ Canonical docs:
   `docs/style-guide.md`
 - Machine-readable package context for agents:
   `docs/agents/agent-context.json`
+- Agent-facing guide and MCP evaluation note:
+  `docs/agents/guide.md`
 - CI and verification troubleshooting:
   `docs/project/check-failure-playbook.md`
 

@@ -12,8 +12,8 @@ the site will expose.
   downloadable examples. Avoid duplicating source files from `examples/`.
 - `docs/guide/`: public user-facing guides, tutorials, migration notes, and
   API contract pages.
-- `docs/agents/`: LLM-readable package context, indexes, and structured files
-  such as future `agent-context.json` or `llms.md`.
+- `docs/agents/`: LLM-readable package context, indexes, structured metadata,
+  and agent-facing guides such as `agent-context.json` and `guide.md`.
 - `docs/project/`: maintainer-facing planning notes that should not be treated
   as public package documentation.
 
