@@ -45,8 +45,9 @@ The first stable runtime should support only bounded retry:
 - `backoff: "exponential"` doubles the previous delay until `maxDelayMs`.
 - Delay values are milliseconds and should reject negative, infinite, or `NaN`
   values.
-- Jitter, network reachability detection, auth refresh, and offline send queues
-  are deferred until a later issue explicitly scopes them.
+- Jitter, network reachability detection, automatic auth refresh, session
+  recovery, replay, and offline send queues are deferred until a later issue
+  explicitly scopes them.
 
 ## Close And Error Handling
 
@@ -68,3 +69,21 @@ policy has failed; otherwise it should settle on `closed`.
 This design does not add runtime reconnect support. It also does not define a
 socket factory API, queued sends, persisted state recovery, adapter-specific
 React behavior, or umbrella `realtime-kit` behavior.
+
+## Auth And Session Boundaries
+
+`socket-store` receives a caller-created WebSocket. The current runtime does
+not own credential lookup, token refresh, cookie rotation, or session renewal.
+Applications that need fresh credentials must create the WebSocket with those
+credentials before passing it to `SocketStore`.
+
+Future reconnect support must keep that responsibility explicit. A reconnect
+API may accept an application-provided socket factory or credential provider,
+but `socket-store` must not infer how to refresh auth from the previous socket,
+reuse expired connection state, or hide credential refresh inside generic retry
+logic.
+
+Session recovery is also application-owned until a later issue defines a
+runtime contract. Reconnect attempts must not imply that missed server messages
+are replayed, unsent client messages are queued, topic snapshots are reconciled,
+or server-side sessions are resumed automatically.
