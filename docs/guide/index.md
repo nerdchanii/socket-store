@@ -12,6 +12,8 @@ test inspection.
 
 - [API Contract](/api): source-backed public entry points, runtime semantics,
   type contracts, error behavior, and non-goals.
+- [Runnable Example](/example): clean-checkout setup, expected WebSocket
+  messages, browser behavior, and cleanup.
 - [README](https://github.com/nerdchanii/socket-store#readme): install, default
   protocol, lifecycle, errors, custom protocol adapters, examples, migration
   notes, and non-goals.
