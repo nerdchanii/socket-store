@@ -43,9 +43,11 @@ const stopMessages = store.subscribe("chat", (messages) => {
   console.log(messages.at(-1));
 });
 
-store.send({
-  key: "chat",
-  data: { author: "Ada", text: "Hello" },
+socket.addEventListener("open", () => {
+  store.send({
+    key: "chat",
+    data: { author: "Ada", text: "Hello" },
+  });
 });
 ```
 
