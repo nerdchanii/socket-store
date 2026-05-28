@@ -12,8 +12,6 @@ same structure the public docs site exposes.
   and build-only site wiring. Do not put durable package guidance here.
 - `docs/public/public/`: static assets copied by the docs site, such as images
   or downloadable examples. Avoid duplicating source files from `examples/`.
-- `docs/public/agents.md`: deployed public index that points package readers to
-  canonical agent context.
 - `docs/agents/`: LLM-readable package context, indexes, structured metadata,
   and agent-facing guides such as `agent-context.json` and `guide.md`.
 - `docs/project/`: maintainer-facing planning notes that should not be treated
