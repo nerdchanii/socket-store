@@ -37,13 +37,13 @@ const isReleaseRelevant = (file) => {
     return true;
   }
   if (file.startsWith("src/") || file.startsWith("examples/")) return true;
+  if (file.startsWith("docs/public/.vitepress/dist/")) {
+    return false;
+  }
   if (file.startsWith("docs/public/") || file.startsWith("docs/agents/")) {
     return true;
   }
-  if (
-    file.startsWith("docs/public/.vitepress/") &&
-    !file.startsWith("docs/public/.vitepress/dist/")
-  ) {
+  if (file.startsWith("docs/public/.vitepress/")) {
     return true;
   }
   return false;
