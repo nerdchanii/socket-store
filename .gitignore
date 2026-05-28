@@ -1,6 +1,6 @@
 /node_modules
 /dist
-/docs/.vitepress/cache
-/docs/.vitepress/dist
+/docs/public/.vitepress/cache
+/docs/public/.vitepress/dist
 
 /example/node_modules

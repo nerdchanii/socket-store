@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 const repoRoot = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const publicDocs = [
   join(repoRoot, "README.md"),
-  ...walkMarkdownFiles(join(repoRoot, "docs", "guide")),
+  ...walkMarkdownFiles(join(repoRoot, "docs", "public")),
 ];
 const snippetPattern = /```([^\n`]*)\n([\s\S]*?)```/g;
 

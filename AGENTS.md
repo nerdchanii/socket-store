@@ -10,11 +10,11 @@ standard for public docs, project docs, and agent-readable docs.
 
 Use the docs layout from `docs/README.md`:
 
-- Public package docs belong under `docs/guide/` or the root `README.md`.
-- Static docs assets belong under `docs/public/`.
+- Public package docs belong under `docs/public/` or the root `README.md`.
+- Static docs assets belong under `docs/public/public/`.
 - Agent-readable package context belongs under `docs/agents/`.
 - Maintainer and contributor workflow notes belong under `docs/project/`.
-- VitePress configuration belongs under `docs/.vitepress/`.
+- VitePress configuration belongs under `docs/public/.vitepress/`.
 
 Do not mix planning history into public package docs. Public docs should describe
 supported behavior, examples, API contracts, migration notes, and non-goals.
@@ -49,4 +49,3 @@ monorepo unless explicitly requested.
 `react-socket-store` adapter behavior belongs in the adapter repository.
 `socket-store` owns WebSocket message routing, topic snapshots, subscriptions,
 protocol adapters, error reporting, and core TypeScript contracts.
-

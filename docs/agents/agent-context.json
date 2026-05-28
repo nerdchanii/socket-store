@@ -8,19 +8,19 @@
       "covers": ["overview", "install", "core model", "default protocol", "lifecycle", "migration notes", "non-goals"]
     },
     {
-      "path": "docs/guide/api.md",
+      "path": "docs/public/api.md",
       "covers": ["public API contract", "runtime semantics", "type contracts", "error behavior", "undecided behavior"]
     },
     {
-      "path": "docs/guide/connection-status.md",
+      "path": "docs/public/connection-status.md",
       "covers": ["connection status values", "status transitions", "close and error semantics", "deferred reconnect boundaries"]
     },
     {
-      "path": "docs/guide/reconnect.md",
+      "path": "docs/public/reconnect.md",
       "covers": ["proposed reconnect option shape", "retry limits", "backoff choices", "close behavior", "auth and session boundaries", "advanced reconnect placement", "implementation boundaries"]
     },
     {
-      "path": "docs/guide/example.md",
+      "path": "docs/public/example.md",
       "covers": ["runnable example setup", "expected message flow", "cleanup behavior"]
     },
     {
@@ -32,27 +32,27 @@
     {
       "name": "SocketStore",
       "source": "src/SocketStore.ts",
-      "docs": "docs/guide/api.md"
+      "docs": "docs/public/api.md"
     },
     {
       "name": "createMessageHandler",
       "source": "src/createMessageHandler.ts",
-      "docs": "docs/guide/api.md"
+      "docs": "docs/public/api.md"
     },
     {
       "name": "SocketStoreError",
       "source": "src/types.ts",
-      "docs": "docs/guide/api.md"
+      "docs": "docs/public/api.md"
     },
     {
       "name": "SocketStoreProtocol",
       "source": "src/types.ts",
-      "docs": "docs/guide/api.md"
+      "docs": "docs/public/api.md"
     },
     {
       "name": "schema helper types",
       "source": "src/types.ts",
-      "docs": "docs/guide/api.md"
+      "docs": "docs/public/api.md"
     }
   ],
   "importantFiles": [
@@ -71,7 +71,7 @@
     {
       "name": "basic WebSocket topic store",
       "path": "examples/basic",
-      "docs": "docs/guide/example.md",
+      "docs": "docs/public/example.md",
       "verification": "npm run example:typecheck"
     }
   ],
