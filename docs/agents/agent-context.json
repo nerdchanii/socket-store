@@ -1,6 +1,7 @@
 {
   "package": "socket-store",
   "summary": "A WebSocket-first topic state store that routes complete WebSocket messages by topic and lets handlers turn payloads into local snapshots.",
+  "publicDocsUrl": "https://nerdchanii.github.io/socket-store/",
   "canonicalDocs": [
     {
       "path": "README.md",

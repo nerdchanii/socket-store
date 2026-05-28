@@ -8,6 +8,9 @@ It is useful when a server sends topic updates such as chat messages, prices,
 presence, or notifications and the client wants a typed snapshot API around
 those updates.
 
+Public docs are published at
+[nerdchanii.github.io/socket-store](https://nerdchanii.github.io/socket-store/).
+
 ## Install
 
 ```sh
