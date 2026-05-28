@@ -27,6 +27,12 @@ while disconnected, and does not silently retry, queue, refresh credentials, or
 resume sessions. Minimal bounded reconnect may be scoped later for
 `socket-store`; advanced orchestration remains outside this package.
 
+## Future SSOT Need
+
+If reconnect work moves beyond documentation into an accepted implementation
+plan, the package should record that accepted scope in a dedicated SPEC instead
+of continuing to spread the boundary across closeout notes and release-era docs.
+
 ## Release Intent
 
 No additional changeset is required for this closeout note. The public contract

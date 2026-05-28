@@ -16,7 +16,8 @@ same structure the public docs site exposes.
   and agent-facing guides such as `agent-context.json` and `guide.md`.
 - `docs/project/`: maintainer-facing planning notes that should not be treated
   as public package documentation, including the
-  [branch policy](./project/branch-policy.md) and
+  [project docs index](./project/README.md),
+  [branch policy](./project/branch-policy.md), and
   [release pipeline](./project/release-pipeline.md).
 
 Root files keep their existing roles: `README.md` is the concise package
@@ -36,3 +37,9 @@ for features that are still deferred.
 GitHub Pages deploys the VitePress output from `docs/public/`, using the
 `/socket-store/` project-site base path. Maintainer notes in `docs/project/`
 are outside that VitePress source tree and are not deployed.
+
+Use [`docs/project/README.md`](./project/README.md) as the entry point for
+internal repository notes. If a process or architecture rule becomes durable
+enough to need one accepted source of truth, record that need there and promote
+the rule into a dedicated SPEC instead of duplicating it across multiple
+project-note files.
