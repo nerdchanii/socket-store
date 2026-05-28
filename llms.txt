@@ -16,6 +16,9 @@ Canonical docs:
 - Public connection status values, transitions, close/error semantics, and
   deferred reconnect boundaries:
   `docs/guide/connection-status.md`
+- Proposed opt-in reconnect configuration, retry/backoff semantics, close
+  behavior, auth/session boundaries, and implementation limits:
+  `docs/guide/reconnect.md`
 - Runnable WebSocket topic-store example with setup, expected message flow, and
   cleanup:
   `docs/guide/example.md`

@@ -17,7 +17,7 @@
     },
     {
       "path": "docs/guide/reconnect.md",
-      "covers": ["proposed reconnect option shape", "retry limits", "backoff choices", "close behavior", "implementation boundaries"]
+      "covers": ["proposed reconnect option shape", "retry limits", "backoff choices", "close behavior", "auth and session boundaries", "implementation boundaries"]
     },
     {
       "path": "docs/guide/example.md",
