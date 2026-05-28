@@ -11,7 +11,9 @@ the same structure the site exposes.
 - `docs/public/`: static assets copied by the docs site, such as images or
   downloadable examples. Avoid duplicating source files from `examples/`.
 - `docs/guide/`: public user-facing guides, tutorials, migration notes, and
-  API contract pages.
+  API contract pages. The deployed
+  [agent-readable docs index](./guide/agents.md) belongs here because it points
+  public site readers to canonical agent context.
 - `docs/agents/`: LLM-readable package context, indexes, structured metadata,
   and agent-facing guides such as `agent-context.json` and `guide.md`.
 - `docs/project/`: maintainer-facing planning notes that should not be treated
