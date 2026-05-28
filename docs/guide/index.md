@@ -14,6 +14,9 @@ test inspection.
   type contracts, error behavior, and non-goals.
 - [Connection Status](/connection-status): public status values, transitions,
   close/error semantics, and deferred reconnect details.
+- [Reconnect Configuration Design](/reconnect): proposed opt-in reconnect
+  configuration shape, retry/backoff semantics, close behavior, and scope
+  boundaries before runtime implementation.
 - [Runnable Example](/example): clean-checkout setup, expected WebSocket
   messages, browser behavior, and cleanup.
 - [Agent-Readable Docs](/agents): public index for `llms.txt`,

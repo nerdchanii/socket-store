@@ -581,9 +581,10 @@ const store = new SocketStore(socket, [chatHandler], {
 
 ## Non-Goals And Undecided Behavior
 
-`socket-store` does not guarantee or provide:
+`socket-store` does not currently provide runtime support for:
 
-- Reconnection, backoff, or offline send queues.
+- Reconnection, backoff, or offline send queues. The proposed future opt-in
+  reconnect shape is documented in [Reconnect Configuration Design](/reconnect).
 - React hooks or render behavior.
 - Persistence.
 - RPC, CRDT, or collaborative editing semantics.

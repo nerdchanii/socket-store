@@ -55,6 +55,10 @@ Reconnect must be explicit and opt-in. `socket-store` must not silently create a
 new WebSocket, retry forever, or queue outgoing messages unless a future API
 asks for that behavior.
 
+See [Reconnect Configuration Design](/reconnect) for the proposed opt-in
+configuration shape, retry limits, backoff choices, close behavior, and
+implementation boundaries.
+
 ## Close And Error Semantics
 
 Native `close` events should move the model toward `closed` when no retry is
