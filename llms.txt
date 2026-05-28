@@ -13,6 +13,9 @@ Canonical docs:
 - Public API contract, runtime semantics, type contracts, error behavior, and
   undecided behavior:
   `docs/guide/api.md`
+- Public connection status values, transitions, close/error semantics, and
+  deferred reconnect boundaries:
+  `docs/guide/connection-status.md`
 - Runnable WebSocket topic-store example with setup, expected message flow, and
   cleanup:
   `docs/guide/example.md`
@@ -49,6 +52,9 @@ Non-goals:
 - socket-store is not a React hook package, RPC framework, CRDT engine,
   persistence layer, reconnection manager, byte-level stream parser, MCP
   docs-query integration, or A2A protocol implementation.
+- Connection status APIs are not implemented yet. Future status work should
+  follow `docs/guide/connection-status.md` and must keep reconnect explicit and
+  opt-in.
 
 Before changing docs, prefer source-backed claims from `src/`, tests, and the
 runnable example. Mark behavior as unsupported or undecided when the source and
