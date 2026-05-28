@@ -4,7 +4,6 @@ export default defineConfig({
   title: "socket-store",
   description: "WebSocket-first topic state store",
   base: "/socket-store/",
-  srcDir: "./guide",
   themeConfig: {
     nav: [{ text: "Guide", link: "/" }],
     sidebar: [

@@ -10,7 +10,7 @@ contents, or public docs contract. Typical cases:
 
 - `src/` runtime or type changes.
 - `package.json` packaging or export changes.
-- `README.md`, `docs/guide/`, `docs/agents/`, or `llms.txt` updates that change
+- `README.md`, `docs/public/`, `docs/agents/`, or `llms.txt` updates that change
   supported usage, API guidance, or documented guarantees.
 - Runnable example changes in `examples/` that intentionally change supported
   setup or behavior.

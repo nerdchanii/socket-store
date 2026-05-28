@@ -1,19 +1,19 @@
 # Documentation Structure
 
 This directory is the source of truth for the `socket-store` documentation site
-published at <https://nerdchanii.github.io/socket-store/>. Keep pages here in
-the same structure the site exposes.
+published at <https://nerdchanii.github.io/socket-store/>. Keep pages in the
+same structure the public docs site exposes.
 
 ## Intended Layout
 
-- `docs/.vitepress/`: VitePress configuration, navigation, theme hooks, and
-  build-only site wiring. Do not put durable package guidance here.
-- `docs/public/`: static assets copied by the docs site, such as images or
-  downloadable examples. Avoid duplicating source files from `examples/`.
-- `docs/guide/`: public user-facing guides, tutorials, migration notes, and
-  API contract pages. The deployed
-  [agent-readable docs index](./guide/agents.md) belongs here because it points
-  public site readers to canonical agent context.
+- `docs/public/`: VitePress source for public user-facing guides, tutorials,
+  migration notes, and API contract pages.
+- `docs/public/.vitepress/`: VitePress configuration, navigation, theme hooks,
+  and build-only site wiring. Do not put durable package guidance here.
+- `docs/public/public/`: static assets copied by the docs site, such as images
+  or downloadable examples. Avoid duplicating source files from `examples/`.
+- `docs/public/agents.md`: deployed public index that points package readers to
+  canonical agent context.
 - `docs/agents/`: LLM-readable package context, indexes, structured metadata,
   and agent-facing guides such as `agent-context.json` and `guide.md`.
 - `docs/project/`: maintainer-facing planning notes that should not be treated
@@ -35,6 +35,6 @@ Agent-facing docs are public only when they describe stable package context or
 canonical links. They must not expose private planning notes or imply support
 for features that are still deferred.
 
-GitHub Pages deploys the VitePress output from `docs/guide/`, using the
+GitHub Pages deploys the VitePress output from `docs/public/`, using the
 `/socket-store/` project-site base path. Maintainer notes in `docs/project/`
-are not part of that VitePress source tree and are not deployed.
+are outside that VitePress source tree and are not deployed.

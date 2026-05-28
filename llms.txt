@@ -12,17 +12,17 @@ Canonical docs:
   `README.md`
 - Public API contract, runtime semantics, type contracts, error behavior, and
   undecided behavior:
-  `docs/guide/api.md`
+  `docs/public/api.md`
 - Public connection status values, transitions, close/error semantics, and
   deferred reconnect boundaries:
-  `docs/guide/connection-status.md`
+  `docs/public/connection-status.md`
 - Proposed opt-in reconnect configuration, retry/backoff semantics, close
   behavior, auth/session boundaries, advanced reconnect placement, and
   implementation limits:
-  `docs/guide/reconnect.md`
+  `docs/public/reconnect.md`
 - Runnable WebSocket topic-store example with setup, expected message flow, and
   cleanup:
-  `docs/guide/example.md`
+  `docs/public/example.md`
 - Documentation rules for future agent-authored changes:
   `docs/style-guide.md`
 - Machine-readable package context for agents:
@@ -42,7 +42,7 @@ Public APIs:
 
 Use the default protocol only for complete JSON WebSocket messages shaped like
 `{ "key": "...", "data": ... }`. Use the custom protocol adapter documented in
-`README.md` and `docs/guide/api.md` when a server sends a different complete
+`README.md` and `docs/public/api.md` when a server sends a different complete
 message shape.
 
 Examples:
