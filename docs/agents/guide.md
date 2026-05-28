@@ -8,9 +8,9 @@ to canonical docs and source references without replacing them.
 1. Start with [`llms.txt`](../../llms.txt) for the shortest package map.
 2. Use [`agent-context.json`](./agent-context.json) for machine-readable
    package purpose, entry points, examples, boundaries, and non-goals.
-3. Use the [API contract](../guide/api.md) for public runtime and type
+3. Use the [API reference](../public/api.md) for public runtime and type
    semantics.
-4. Use the [runnable example](../guide/example.md) for setup, expected message
+4. Use the [runnable example](../public/example.md) for setup, expected message
    flow, and cleanup behavior.
 5. Use the [documentation style guide](../style-guide.md) before editing public
    docs.
