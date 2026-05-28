@@ -65,8 +65,13 @@ Native `error` events should continue to report `ERR_SOCKET_ERROR` through
 the following `close` event or reconnect policy decides whether the public
 status becomes `closed`, `reconnecting`, or `error`.
 
-`send` while not `open` keeps its current behavior: it throws
-`ERR_SOCKET_NOT_OPEN`. Status APIs do not imply message buffering.
+`send` succeeds only while the socket is `open`. Connecting, closing, and closed
+sockets reject sends immediately with `ERR_SOCKET_NOT_OPEN`. The runtime does
+not serialize, send, or queue those messages for later delivery.
+
+Future `reconnecting` and `error` states must follow the same default policy
+unless a later explicit API adds a different send mode: sends are rejected with
+`ERR_SOCKET_NOT_OPEN`, and no offline queue is created implicitly.
 
 ## Internal Details
 

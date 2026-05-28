@@ -208,9 +208,11 @@ The current error codes are:
 - `ERR_HANDLER_FAILED`
 - `ERR_SOCKET_NOT_OPEN`
 
-`send` throws `ERR_SOCKET_NOT_OPEN` if the WebSocket is not open. Serializer
-failures are reported to `onError` and rethrown. Incoming parse, route, and
-handler failures are reported to `onError` and do not update topic state.
+`send` throws `ERR_SOCKET_NOT_OPEN` if the WebSocket is not open. Connecting,
+closing, and closed sockets reject sends immediately; messages are not queued
+for later delivery. Serializer failures are reported to `onError` and rethrown.
+Incoming parse, route, and handler failures are reported to `onError` and do not
+update topic state.
 
 Call `dispose()` when the store should stop owning the socket listeners:
 

@@ -385,6 +385,8 @@ Behavior contract:
 
 - Throws `SocketStoreError` with code `ERR_SOCKET_NOT_OPEN` before sending when
   `socket.readyState !== 1`.
+- Connecting, closing, and closed sockets reject sends with
+  `ERR_SOCKET_NOT_OPEN`; messages are not queued for later delivery.
 - Uses the custom protocol serializer when provided.
 - Otherwise sends `JSON.stringify({ key, data })`.
 - Serializer or socket-send failures are reported through `onError` as
