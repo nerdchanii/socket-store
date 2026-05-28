@@ -1,6 +1,6 @@
-# API Contract
+# API Reference
 
-This page documents the public `socket-store` contract exported from the package
+This page documents the public `socket-store` API exported from the package
 entrypoint:
 
 ```ts
@@ -17,7 +17,7 @@ The claims below are backed by `src/index.ts`, `src/SocketStore.ts`,
 
 ## Topic Schemas
 
-Signature:
+Type:
 
 ```ts
 type SocketSchema = {
@@ -28,7 +28,7 @@ type SocketSchema = {
 };
 ```
 
-Behavior contract:
+Usage notes:
 
 - A schema maps each topic key to the stored state type and incoming payload
   type for that topic.
@@ -58,7 +58,7 @@ type ChatHandler = TopicHandler<AppSchema, "chat">;
 type AppUpdate = TopicUpdate<AppSchema>;
 ```
 
-## Adapter Contract Types
+## Adapter Types
 
 Import path:
 
@@ -100,7 +100,7 @@ interface SocketStoreAdapterContract<Schema> {
 }
 ```
 
-Behavior contract:
+Usage notes:
 
 - These types are the public framework-adapter surface for reading topic state,
   reading connection status, sending typed topic payloads, and subscribing to
@@ -119,7 +119,7 @@ Import path:
 import { createMessageHandler } from "socket-store";
 ```
 
-Signature:
+Type:
 
 ```ts no-verify
 function createMessageHandler<S, D, K extends string>(
@@ -129,7 +129,7 @@ function createMessageHandler<S, D, K extends string>(
 ): MessageHandler<S, D, K>;
 ```
 
-Behavior contract:
+Usage notes:
 
 - `key` is the topic name routed by `SocketStore`.
 - `state` is the initial snapshot for that topic.
@@ -167,7 +167,7 @@ new SocketStore<Schema>(
 );
 ```
 
-Behavior contract:
+Usage notes:
 
 - The store accepts an existing `WebSocket` instance and registers `open`,
   `message`, `error`, and `close` listeners.
@@ -185,13 +185,13 @@ const store = new SocketStore<AppSchema>(socket, [chatHandler]);
 
 ### getState
 
-Signature:
+Type:
 
 ```ts no-verify
 store.getState<K extends TopicKey<Schema>>(key: K): TopicState<Schema, K>;
 ```
 
-Behavior contract:
+Usage notes:
 
 - Returns the current snapshot for a registered topic.
 - The initial value is the handler's initial `state`.
@@ -207,13 +207,13 @@ const messages = store.getState("chat");
 
 ### getStatus
 
-Signature:
+Type:
 
 ```ts no-verify
 store.getStatus(): SocketStoreConnectionStatus;
 ```
 
-Behavior contract:
+Usage notes:
 
 - Returns the current public connection status snapshot.
 - Initial status is derived from the socket's native `readyState`: `0` becomes
@@ -233,13 +233,13 @@ const status = store.getStatus();
 
 ### subscribeStatus
 
-Signature:
+Type:
 
 ```ts no-verify
 store.subscribeStatus(listener: SocketStoreStatusListener): Unsubscribe;
 ```
 
-Behavior contract:
+Usage notes:
 
 - Registers a listener for future status changes.
 - The listener receives the next `SocketStoreConnectionStatus` value.
@@ -261,7 +261,7 @@ stopStatus();
 
 ### subscribe
 
-Signature:
+Type:
 
 ```ts no-verify
 store.subscribe<K extends TopicKey<Schema>>(
@@ -270,7 +270,7 @@ store.subscribe<K extends TopicKey<Schema>>(
 ): Unsubscribe;
 ```
 
-Behavior contract:
+Usage notes:
 
 - Registers a listener for successful updates to one topic.
 - The listener receives the next topic state after the handler returns.
@@ -295,13 +295,13 @@ unsubscribe();
 
 ### subscribeRaw
 
-Signature:
+Type:
 
 ```ts no-verify
 store.subscribeRaw(listener: RawMessageListener): Unsubscribe;
 ```
 
-Behavior contract:
+Usage notes:
 
 - Fires before protocol parsing.
 - Receives `{ data, event }`, where `data` is the original `MessageEvent.data`.
@@ -318,13 +318,13 @@ const stopRaw = store.subscribeRaw(({ data, event }) => {
 
 ### subscribeAll
 
-Signature:
+Type:
 
 ```ts no-verify
 store.subscribeAll(listener: TopicUpdateListener<Schema>): Unsubscribe;
 ```
 
-Behavior contract:
+Usage notes:
 
 - Fires after any successful registered topic update.
 - Receives `{ key, data, state }` for the updated topic.
@@ -343,13 +343,13 @@ const stopAll = store.subscribeAll((update) => {
 
 ### subscribeUnhandled
 
-Signature:
+Type:
 
 ```ts no-verify
 store.subscribeUnhandled(listener: UnhandledMessageListener): Unsubscribe;
 ```
 
-Behavior contract:
+Usage notes:
 
 - Fires when a parsed default-protocol message has no registered handler.
 - Fires when a custom parser returns `{ type: "unhandled", data, key? }`.
@@ -369,7 +369,7 @@ const stopUnhandled = store.subscribeUnhandled(({ key, data }) => {
 
 ### send
 
-Signature:
+Type:
 
 ```ts no-verify
 store.send<K extends TopicKey<Schema>>({
@@ -381,7 +381,7 @@ store.send<K extends TopicKey<Schema>>({
 }): void;
 ```
 
-Behavior contract:
+Usage notes:
 
 - Throws `SocketStoreError` with code `ERR_SOCKET_NOT_OPEN` before sending when
   `socket.readyState !== 1`.
@@ -404,13 +404,13 @@ store.send({
 
 ### dispose
 
-Signature:
+Type:
 
 ```ts no-verify
 store.dispose(): void;
 ```
 
-Behavior contract:
+Usage notes:
 
 - Idempotently removes native socket listeners.
 - Clears topic, raw, all-topic, and unhandled subscriptions.
@@ -435,7 +435,7 @@ type SocketStoreEnvelope = {
 };
 ```
 
-Behavior contract:
+Usage notes:
 
 - `key` selects a registered handler.
 - `data` is passed to the handler callback.
@@ -478,7 +478,7 @@ type SocketStoreProtocol<Schema> = {
 };
 ```
 
-Parser result contract:
+Parser results:
 
 ```ts
 type SocketStoreProtocolResult =
@@ -487,7 +487,7 @@ type SocketStoreProtocolResult =
   | { type: "ignore" };
 ```
 
-Behavior contract:
+Usage notes:
 
 - `parse` receives the original `MessageEvent`.
 - Parser and serializer methods are called with the protocol object as `this`.
@@ -535,7 +535,7 @@ type ISocketStoreOptions<Schema> = {
 };
 ```
 
-Behavior contract:
+Usage notes:
 
 - `onConnect` runs for native `open` events before disposal.
 - `onClose` receives native `CloseEvent` values before disposal.
@@ -579,7 +579,7 @@ const store = new SocketStore(socket, [chatHandler], {
 });
 ```
 
-## Non-Goals And Undecided Behavior
+## Current Limitations And Edge Cases
 
 `socket-store` does not currently provide runtime support for:
 
@@ -591,12 +591,11 @@ const store = new SocketStore(socket, [chatHandler], {
 - Byte-level stream parsing across multiple WebSocket messages.
 - A2A protocol support.
 
-Undecided behavior:
+Keep these edge cases in mind:
 
-- Runtime `getState` for unknown keys is not a supported contract.
-- Runtime handling for default envelopes that omit `data` is not a supported
-  contract.
+- Runtime `getState` for unknown keys is not supported.
+- Runtime handling for default envelopes that omit `data` is not supported.
 - Listener exception handling is not wrapped by `SocketStore`; do not rely on
   listener failures being converted to `SocketStoreError`.
 - The package accepts any `WebSocket`-compatible object at runtime, but the
-  public contract is the standard `WebSocket` interface.
+  supported API is the standard `WebSocket` interface.
