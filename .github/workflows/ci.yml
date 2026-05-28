@@ -53,5 +53,8 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Build docs
+        run: npm run docs:build
+
       - name: Verify package contents
         run: npm run pack:dry-run

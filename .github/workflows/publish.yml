@@ -1,19 +1,18 @@
-name: Release
+name: Publish
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 permissions:
   contents: write
-  pull-requests: write
+  id-token: write
 
 jobs:
-  release:
+  publish:
     runs-on: ubuntu-latest
+    environment: npm-publish
 
     steps:
       - name: Checkout
@@ -24,6 +23,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
+          registry-url: https://registry.npmjs.org
 
       - name: Install
         run: npm ci
@@ -46,10 +46,11 @@ jobs:
       - name: Verify package contents
         run: npm run pack:dry-run
 
-      - name: Create release pull request
+      - name: Publish to npm
         uses: changesets/action@v1
         with:
-          commit: "chore: version packages"
-          title: "Release socket-store"
+          createGithubReleases: true
+          publish: npx changeset publish
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          NPM_CONFIG_PROVENANCE: true
