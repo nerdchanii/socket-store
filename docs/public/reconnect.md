@@ -1,13 +1,28 @@
-# Reconnect Configuration Design
+# Reconnect Behavior
 
-Reconnect behavior is not implemented in the current runtime. This page defines
-the supported shape for a future opt-in API so reconnect semantics are explicit
-before runtime work starts.
+Reconnect behavior is not implemented in the current runtime.
 
-## Proposed Option
+## What You Can Rely On Today
 
-Future reconnect support should live under `reconnect` in the third
-`SocketStore` constructor argument:
+`socket-store` does not reconnect automatically after a socket closes or fails.
+
+Today, you can rely on these behaviors:
+
+- The store observes the `WebSocket` instance you provide. It does not create a
+  replacement socket on its own.
+- When the socket closes, connection status settles on `closed`.
+- `send` succeeds only while the socket is `open`.
+- Connecting, closing, and closed sockets reject `send` with
+  `ERR_SOCKET_NOT_OPEN`.
+- The runtime does not queue messages for later delivery.
+
+If your application needs reconnect behavior today, it must create and manage
+replacement `WebSocket` instances outside `socket-store`.
+
+## Proposed Future Option
+
+If reconnect support is added later, the documented shape is an explicit
+`reconnect` option in the third `SocketStore` constructor argument:
 
 ```ts no-verify
 type SocketStoreReconnectOptions = {
@@ -32,12 +47,12 @@ new SocketStore(socket, handlers, {
 
 Reconnect must remain disabled unless `reconnect.enabled === true`. Omitting
 `reconnect`, passing `false`, or passing an object without explicit opt-in must
-preserve today's behavior: the supplied WebSocket closes, status becomes
-`closed`, and sends continue to fail immediately while the socket is not open.
+preserve today's behavior.
 
 ## Retry And Backoff Semantics
 
-The first stable runtime should support only bounded retry:
+If reconnect support is added, the first stable version should support only
+bounded retry:
 
 - `maxAttempts` counts replacement WebSocket attempts after the observed socket
   closes. The default should be finite.
@@ -64,9 +79,9 @@ replacement socket is opening, status should move to `connecting`. Exhausting
 retry attempts should move to `error` only when the runtime can prove the retry
 policy has failed; otherwise it should settle on `closed`.
 
-## Scope Boundaries
+## What This Page Does Not Promise
 
-This design does not add runtime reconnect support. It also does not define a
+This page does not add runtime reconnect support. It also does not define a
 socket factory API, queued sends, persisted state recovery, or adapter-specific
 React behavior.
 

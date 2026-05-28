@@ -14,11 +14,11 @@ Status APIs use these public values:
   ready state when the store started observing it, and can send messages.
 - `closing`: close has started, either because the native socket is closing or a
   future store-owned close operation has begun.
-- `closed`: the connection is fully closed and no retry is pending.
-- `reconnecting`: a future opt-in reconnect policy is waiting to create or open
-  the next WebSocket after a close or network failure.
-- `error`: the connection reached a terminal failure state that will not retry
-  without user action.
+- `closed`: the connection is fully closed.
+- `reconnecting`: reserved for a future opt-in reconnect feature. The current
+  runtime does not emit this status.
+- `error`: reserved for a future terminal reconnect failure state. The current
+  runtime does not emit this status.
 
 `error` is a connection state, not a replacement for `SocketStoreError`.
 Protocol, routing, handler, socket, and send failures should continue to use
@@ -26,7 +26,7 @@ Protocol, routing, handler, socket, and send failures should continue to use
 
 ## Transitions
 
-The initial transition for a newly created WebSocket is:
+Today, the status flow for a newly created WebSocket is:
 
 ```txt
 connecting -> open -> closing -> closed
@@ -39,10 +39,10 @@ The runtime API maps the socket's initial native `readyState` to public status:
 `CONNECTING` becomes `connecting`, `OPEN` becomes `open`, `CLOSING` becomes
 `closing`, and `CLOSED` becomes `closed`.
 
-If the socket closes before `open`, the status becomes `closed` unless a future
-opt-in reconnect policy schedules another attempt.
+If the socket closes before `open`, the status becomes `closed`.
 
-Future reconnect support may add these transitions:
+If a future opt-in reconnect feature is added, it may introduce transitions
+such as:
 
 ```txt
 open -> reconnecting -> connecting -> open
@@ -51,13 +51,12 @@ reconnecting -> closed
 reconnecting -> error
 ```
 
-Reconnect must be explicit and opt-in. `socket-store` must not silently create a
-new WebSocket, retry forever, or queue outgoing messages unless a future API
-asks for that behavior.
+Reconnect is not part of the current runtime. `socket-store` does not silently
+create a new WebSocket, retry in the background, or queue outgoing messages for
+later delivery.
 
-See [Reconnect Configuration Design](/reconnect) for the proposed opt-in
-configuration shape, retry limits, backoff choices, close behavior, and
-implementation boundaries.
+See [Reconnect Behavior](/reconnect) for the current reconnect limitation and
+the proposed opt-in API shape documented for future work.
 
 ## Close And Error Semantics
 
