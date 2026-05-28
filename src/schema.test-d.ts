@@ -20,6 +20,9 @@ import type {
   SocketStoreSender,
   SocketStoreStateGetter,
   SocketStoreSubscriber,
+  SocketStoreConnectionStatus,
+  SocketStoreStatusGetter,
+  SocketStoreStatusSubscriber,
   TopicStateListener,
   TopicUpdate,
   Unsubscribe,
@@ -109,9 +112,22 @@ subscribeToTopic("chat", (messages) => {
 // @ts-expect-error — listener state must match the topic
 subscribeToTopic("chat", (_price: Price) => {});
 
+type AppStatusGetter = SocketStoreStatusGetter;
+declare const getStatus: AppStatusGetter;
+const _status: SocketStoreConnectionStatus = getStatus();
+// @ts-expect-error — status values are the documented string union
+const _badStatus: SocketStoreConnectionStatus = "retrying";
+
+type AppStatusSubscriber = SocketStoreStatusSubscriber;
+declare const subscribeToStatus: AppStatusSubscriber;
+const _statusUnsubscribe: Unsubscribe = subscribeToStatus((status) => {
+  const _status: SocketStoreConnectionStatus = status;
+});
+
 declare const adapterStore: SocketStoreAdapterContract<AppSchema>;
 adapterStore.send({ key: "chat", data: { author: "ada", text: "hi" } });
 const _adapterPrice: Price = adapterStore.getState("price");
+const _adapterStatus: SocketStoreConnectionStatus = adapterStore.getStatus();
 const _adapterUnsubscribe: Unsubscribe = adapterStore.subscribe("price", (price) => {
   const _price: Price = price;
 });
@@ -190,6 +206,7 @@ new SocketStore<AppSchema>(ws, [
 const chatMessages: Message[] = store.getState("chat");
 // @ts-expect-error — "unknown" is not a key in AppSchema
 store.getState("unknown");
+const connectionStatus: SocketStoreConnectionStatus = store.getStatus();
 
 // subscribe — listener receives the correct state type
 const unsubscribe: Unsubscribe = store.subscribe("chat", (msgs: Message[]) => {
@@ -198,6 +215,10 @@ const unsubscribe: Unsubscribe = store.subscribe("chat", (msgs: Message[]) => {
 unsubscribe();
 // @ts-expect-error — listener receives Message[], not string[]
 store.subscribe("chat", (_msgs: string[]) => {});
+
+store.subscribeStatus((status) => {
+  const _status: SocketStoreConnectionStatus = status;
+});
 
 store.subscribeAll((update) => {
   const _key: "chat" | "price" = update.key;

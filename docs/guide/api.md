@@ -66,6 +66,8 @@ Import path:
 import type {
   SocketStoreAdapterContract,
   SocketStoreSender,
+  SocketStoreStatusGetter,
+  SocketStoreStatusSubscriber,
   SocketStoreStateGetter,
   SocketStoreSubscriber,
   TopicStateListener,
@@ -93,13 +95,16 @@ interface SocketStoreAdapterContract<Schema> {
   send: SocketStoreSender<Schema>;
   getState: SocketStoreStateGetter<Schema>;
   subscribe: SocketStoreSubscriber<Schema>;
+  getStatus: SocketStoreStatusGetter;
+  subscribeStatus: SocketStoreStatusSubscriber;
 }
 ```
 
 Behavior contract:
 
 - These types are the public framework-adapter surface for reading topic state,
-  sending typed topic payloads, and subscribing to topic snapshots.
+  reading connection status, sending typed topic payloads, and subscribing to
+  topic or status snapshots.
 - They intentionally exclude socket lifecycle methods, raw message listeners,
   all-topic listeners, unhandled listeners, custom protocol configuration, and
   internal store storage.
@@ -198,6 +203,60 @@ Example:
 
 ```ts no-verify
 const messages = store.getState("chat");
+```
+
+### getStatus
+
+Signature:
+
+```ts no-verify
+store.getStatus(): SocketStoreConnectionStatus;
+```
+
+Behavior contract:
+
+- Returns the current public connection status snapshot.
+- Initial status is derived from the socket's native `readyState`: `0` becomes
+  `connecting`, `1` becomes `open`, `2` becomes `closing`, and `3` becomes
+  `closed`.
+- Native `open` events move the status to `open`.
+- Native `close` events move the status to `closed`.
+- Native `error` events continue to report `ERR_SOCKET_ERROR` through `onError`
+  and do not change status by themselves.
+- The status snapshot remains readable after `dispose()`.
+
+Example:
+
+```ts no-verify
+const status = store.getStatus();
+```
+
+### subscribeStatus
+
+Signature:
+
+```ts no-verify
+store.subscribeStatus(listener: SocketStoreStatusListener): Unsubscribe;
+```
+
+Behavior contract:
+
+- Registers a listener for future status changes.
+- The listener receives the next `SocketStoreConnectionStatus` value.
+- The returned unsubscribe function is idempotent.
+- Unsubscribing stops future notifications for that listener.
+- Duplicate subscriptions are independent.
+- Notification uses a stable listener snapshot.
+- New status subscriptions after `dispose()` throw `Error`.
+
+Example:
+
+```ts no-verify
+const stopStatus = store.subscribeStatus((status) => {
+  console.log(status);
+});
+
+stopStatus();
 ```
 
 ### subscribe

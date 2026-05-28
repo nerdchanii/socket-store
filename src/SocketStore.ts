@@ -7,6 +7,8 @@ import {
   RawSocketStoreMessage,
   SocketSchema,
   SocketStoreError,
+  SocketStoreConnectionStatus,
+  SocketStoreStatusListener,
   SocketStoreEnvelope,
   SocketStoreMessageHandlers,
   SocketStoreOutgoingMessage,
@@ -42,13 +44,20 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
   private rawListeners: Array<ListenerEntry<RawMessageListener>>;
   private allTopicListeners: Array<ListenerEntry<TopicUpdateListener<Schema>>>;
   private unhandledListeners: Array<ListenerEntry<UnhandledMessageListener>>;
+  private statusListeners: Array<ListenerEntry<SocketStoreStatusListener>>;
+  private status: SocketStoreConnectionStatus;
   options = {} as ISocketStoreOptions<Schema>;
   private disposed = false;
+  private readonly originalClose: WebSocket["close"];
   private readonly handleOpen = () => this.onConnect();
   private readonly handleMessage = (event: MessageEvent) =>
     this.onMessage(event);
   private readonly handleError = (event: Event) => this.onError(event);
   private readonly handleClose = (event: CloseEvent) => this.onClose(event);
+  private readonly handleCloseRequest = (code?: number, reason?: string) => {
+    this.setStatus("closing");
+    this.originalClose.call(this.socket, code, reason);
+  };
 
   constructor(
     protected socket: WebSocket,
@@ -60,6 +69,9 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
     this.rawListeners = [];
     this.allTopicListeners = [];
     this.unhandledListeners = [];
+    this.statusListeners = [];
+    this.status = this.getInitialStatus();
+    this.originalClose = this.socket.close;
 
     const handlers = messageHandlers as Array<MessageHandler<any, any>>;
     this.store = handlers.reduce((acc, cur) => {
@@ -79,12 +91,15 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
     this.socket.addEventListener("message", this.handleMessage);
     this.socket.addEventListener("error", this.handleError);
     this.socket.addEventListener("close", this.handleClose);
+    this.socket.close = this.handleCloseRequest;
   }
 
   onConnect() {
     if (this.disposed) {
       return;
     }
+
+    this.setStatus("open");
 
     if (this.options.onConnect) {
       this.options.onConnect();
@@ -160,6 +175,7 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
       return;
     }
 
+    this.setStatus("closed");
     this.options.onClose?.(event);
   };
 
@@ -218,6 +234,10 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
     return this.store[key as string].state;
   };
 
+  getStatus = (): SocketStoreConnectionStatus => {
+    return this.getCurrentStatus();
+  };
+
   subscribe = <K extends TopicKey<Schema>>(
     key: K,
     listener: (state: TopicState<Schema, K>) => void
@@ -235,6 +255,23 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
 
       subscribed = false;
       this.listeners = this.listeners.filter((current) => current !== entry);
+    };
+  };
+
+  subscribeStatus = (listener: SocketStoreStatusListener): Unsubscribe => {
+    this.assertActive("subscribe");
+
+    const entry = { listener };
+    this.statusListeners.push(entry);
+
+    let subscribed = true;
+    return () => {
+      if (!subscribed) {
+        return;
+      }
+
+      subscribed = false;
+      this.statusListeners = this.statusListeners.filter((current) => current !== entry);
     };
   };
 
@@ -319,6 +356,13 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
     });
   };
 
+  private notifyStatus = () => {
+    const snapshot = [...this.statusListeners];
+    snapshot.forEach(({ listener }) => {
+      listener(this.status);
+    });
+  };
+
   dispose = () => {
     if (this.disposed) {
       return;
@@ -329,16 +373,51 @@ export class SocketStore<Schema extends SocketSchema = DefaultSchema>
     this.rawListeners = [];
     this.allTopicListeners = [];
     this.unhandledListeners = [];
+    this.statusListeners = [];
     this.socket.removeEventListener("open", this.handleOpen);
     this.socket.removeEventListener("message", this.handleMessage);
     this.socket.removeEventListener("error", this.handleError);
     this.socket.removeEventListener("close", this.handleClose);
+    this.socket.close = this.originalClose;
   };
 
   private assertActive(action: "send" | "subscribe") {
     if (this.disposed) {
       throw new Error(`Cannot ${action} after SocketStore has been disposed`);
     }
+  }
+
+  private getInitialStatus(): SocketStoreConnectionStatus {
+    return this.getStatusFromReadyState() ?? "connecting";
+  }
+
+  private getCurrentStatus(): SocketStoreConnectionStatus {
+    return this.getStatusFromReadyState() ?? this.status;
+  }
+
+  private getStatusFromReadyState(): SocketStoreConnectionStatus | undefined {
+    if (this.socket.readyState === 1) {
+      return "open";
+    }
+
+    if (this.socket.readyState === 2) {
+      return "closing";
+    }
+
+    if (this.socket.readyState === 3) {
+      return "closed";
+    }
+
+    return undefined;
+  }
+
+  private setStatus(status: SocketStoreConnectionStatus) {
+    if (this.status === status) {
+      return;
+    }
+
+    this.status = status;
+    this.notifyStatus();
   }
 
   private isEnvelope(value: unknown): value is SocketStoreEnvelope {

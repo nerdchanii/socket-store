@@ -125,6 +125,29 @@ Topic listeners are called after the handler returns the next state. Calling the
 unsubscribe function stops future notifications for that listener. It does not
 remove the topic handler and it does not stop the store from updating that topic.
 
+## Connection Status
+
+`getStatus` returns the current connection status snapshot:
+
+```ts no-verify
+const status = store.getStatus();
+```
+
+`subscribeStatus` registers a listener for future status changes and returns an
+idempotent unsubscribe function:
+
+```ts no-verify
+const stopStatus = store.subscribeStatus((status) => {
+  console.log(status);
+});
+
+stopStatus();
+```
+
+The current runtime emits `connecting`, `open`, `closing`, and `closed` based on
+the socket's native lifecycle. Native `error` events still report
+`ERR_SOCKET_ERROR` through `onError`; they do not change status by themselves.
+
 ## Observing Incoming Messages
 
 Use these subscriptions when you need visibility around the default protocol:
