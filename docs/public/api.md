@@ -590,7 +590,6 @@ const store = new SocketStore(socket, [chatHandler], {
 - RPC, CRDT, or collaborative editing semantics.
 - Byte-level stream parsing across multiple WebSocket messages.
 - A2A protocol support.
-- MCP docs-query integration.
 
 Undecided behavior:
 

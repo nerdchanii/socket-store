@@ -67,10 +67,10 @@ policy has failed; otherwise it should settle on `closed`.
 ## Scope Boundaries
 
 This design does not add runtime reconnect support. It also does not define a
-socket factory API, queued sends, persisted state recovery, adapter-specific
-React behavior, or umbrella `realtime-kit` behavior.
+socket factory API, queued sends, persisted state recovery, or adapter-specific
+React behavior.
 
-## Advanced Reconnect Placement
+## What Belongs Outside This Package
 
 Minimal reconnect behavior may belong in `socket-store` when it is limited to
 bounded replacement of a caller-supplied WebSocket and the existing topic-store
@@ -78,16 +78,13 @@ status model. That scope includes explicit opt-in, finite retry attempts,
 simple backoff, close-event filtering, and immediate send rejection while the
 store is not open.
 
-Advanced reconnect behavior belongs outside `socket-store` and should be
-evaluated in future `realtime-kit` planning before implementation starts. This
-includes network reachability, jitter policy, offline queues, message replay,
-session resumption, persisted snapshots, cross-tab coordination, protocol-level
+Advanced reconnect behavior belongs outside `socket-store`. This includes
+network reachability, jitter policy, offline queues, message replay, session
+resumption, persisted snapshots, cross-tab coordination, protocol-level
 acknowledgement, and app-wide auth/session orchestration.
 
 `socket-store` should expose enough boundaries for a higher-level reconnect
-manager to create fresh sockets, but it should not become that manager. Until a
-future issue explicitly scopes `realtime-kit`, this repository should only
-document the boundary and must not add `realtime-kit` runtime code.
+manager to create fresh sockets, but it should not become that manager.
 
 ## Auth And Session Boundaries
 

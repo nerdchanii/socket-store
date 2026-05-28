@@ -11,10 +11,9 @@ export default defineConfig({
         text: "Guide",
         items: [
           { text: "Overview", link: "/" },
-          { text: "API Contract", link: "/api" },
+          { text: "API Reference", link: "/api" },
           { text: "Connection Status", link: "/connection-status" },
           { text: "Runnable Example", link: "/example" },
-          { text: "Agent-Readable Docs", link: "/agents" },
         ],
       },
     ],
