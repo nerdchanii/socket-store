@@ -1,6 +1,6 @@
 {
   "name": "socket-store",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "it is a websocket store. it makes it easy to use websocket",
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
