@@ -17,7 +17,8 @@ Canonical docs:
   deferred reconnect boundaries:
   `docs/guide/connection-status.md`
 - Proposed opt-in reconnect configuration, retry/backoff semantics, close
-  behavior, auth/session boundaries, and implementation limits:
+  behavior, auth/session boundaries, advanced reconnect placement, and
+  implementation limits:
   `docs/guide/reconnect.md`
 - Runnable WebSocket topic-store example with setup, expected message flow, and
   cleanup:
@@ -53,8 +54,8 @@ Examples:
 Non-goals:
 
 - socket-store is not a React hook package, RPC framework, CRDT engine,
-  persistence layer, reconnection manager, byte-level stream parser, MCP
-  docs-query integration, or A2A protocol implementation.
+  persistence layer, advanced reconnection manager, byte-level stream parser,
+  MCP docs-query integration, or A2A protocol implementation.
 - Connection status APIs are implemented as framework-agnostic `getStatus()`
   and `subscribeStatus(listener)`. Future reconnect work must remain explicit
   and opt-in.
