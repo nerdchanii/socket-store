@@ -6,7 +6,7 @@ small, issue-scoped, and aligned with the public package contract.
 ## Documentation Workflow
 
 Read `docs/style-guide.md` before editing documentation. It defines the writing
-standard for public docs, project docs, and agent-readable docs.
+standard for public docs and agent-readable docs.
 
 Use the docs layout from `docs/README.md`:
 
@@ -18,8 +18,8 @@ Use the docs layout from `docs/README.md`:
 
 Do not mix planning history into public package docs. Public docs should describe
 supported behavior, examples, API contracts, migration notes, and non-goals.
-Project docs may describe maintainer workflow, issue sequencing, and local
-verification guidance. Agent-only workflow rules belong in this file.
+Project docs may describe maintainer branch and release workflow. Agent-only
+workflow rules belong in this file.
 
 ## Verification Workflow
 
@@ -36,10 +36,10 @@ Relevant package scripts are defined in `package.json`. Current checks include:
 - `npm run build`
 - `npm run pack:dry-run`
 
-When a check fails, use `docs/project/check-failure-playbook.md` to decide
-whether the fix belongs in implementation, tests, docs, tooling, or a follow-up
-report. Include the command and first relevant error lines when reporting an
-unrelated failure.
+When a check fails, use `docs/project/release-runbook.md` for release-blocking
+checks and the package scripts in `package.json` to rerun the narrow failing
+command first. Include the command and first relevant error lines when
+reporting an unrelated failure.
 
 ## Package Boundaries
 
