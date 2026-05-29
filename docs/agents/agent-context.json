@@ -65,7 +65,8 @@
     "examples/basic/server.mjs",
     "examples/basic/src/main.ts",
     "docs/style-guide.md",
-    "docs/project/check-failure-playbook.md"
+    "docs/project/release-policy.md",
+    "docs/project/release-runbook.md"
   ],
   "examples": [
     {

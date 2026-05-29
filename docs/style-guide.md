@@ -28,6 +28,12 @@ Before documenting an API guarantee, inspect the relevant source or tests:
 If the behavior is not covered by source or tests, either add coverage in the
 implementation task or describe it as a limitation, not a guarantee.
 
+## Examples
+
+Examples must be runnable or copied from runnable files. Include the verification
+command when practical, such as `npm run example:typecheck`, and summarize
+expected inputs, outputs, and cleanup behavior when setup is lengthy.
+
 ## Agent-Readable Docs
 
 Agent docs should help coding tools identify package purpose, entry points,
@@ -35,21 +41,17 @@ non-goals, examples, and canonical public docs without re-reading every source
 file. They should link back to public pages instead of duplicating detailed API
 contracts.
 
+## Package Boundaries
+
 Do not describe MCP or A2A support as available. MCP may be discussed only as a
 future docs-query integration. A2A protocol support is outside the current
 package contract unless a future adapter issue explicitly scopes it.
-
-## Examples
-
-Examples must be runnable or copied from runnable files. Include the verification
-command when practical, such as `npm run example:typecheck`, and summarize
-expected inputs, outputs, and cleanup behavior when setup is lengthy.
 
 ## Snippet Verification
 
 Public TypeScript fences in `README.md` and `docs/public/` are compiled by
 `npm run docs:verify-snippets`.
 
-Use ` ```ts no-verify ` only for explicit pseudocode, signatures, or partial
-excerpts that are intentionally not standalone programs. Keep those exceptions
-rare and reviewable.
+Use `no-verify` only for explicit pseudocode, signatures, or partial excerpts
+that are intentionally not standalone programs. Keep those exceptions rare and
+reviewable.
