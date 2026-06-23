@@ -1,3 +1,13 @@
+---
+title: Branch Policy
+doc_type: policy
+status: active
+owner: maintainers
+applies_to: socket-store
+last_reviewed: 2026-05-29
+source_of_truth: docs/project/branch-policy.md
+---
+
 # Branch Policy
 
 `socket-store` uses trunk-based development with release maintenance branches.

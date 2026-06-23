@@ -14,11 +14,12 @@ same structure the public docs site exposes.
   or downloadable examples. Avoid duplicating source files from `examples/`.
 - `docs/agents/`: LLM-readable package context, indexes, structured metadata,
   and agent-facing guides such as `agent-context.json` and `guide.md`.
-- `docs/project/`: maintainer-facing planning notes that should not be treated
-  as public package documentation, including the
-  [project docs index](./project/README.md),
-  [branch policy](./project/branch-policy.md), and
-  [release pipeline](./project/release-pipeline.md).
+- `docs/project/`: maintainer-facing operations docs that should not be treated
+  as public package documentation. Use the
+  [project docs index](./project/README.md), then the
+  [branch policy](./project/branch-policy.md),
+  [release policy](./project/release-policy.md), and
+  [release runbook](./project/release-runbook.md).
 
 Root files keep their existing roles: `README.md` is the concise package
 overview, `llms.txt` is the future high-signal agent index, and `examples/`
@@ -31,15 +32,9 @@ TypeScript usage, lifecycle, cleanup, errors, protocol adapters, examples, and
 non-goals. They should be suitable for npm users and GitHub readers.
 
 Agent-facing docs are public only when they describe stable package context or
-canonical links. They must not expose private planning notes or imply support
-for features that are still deferred.
+canonical links. They must not expose private maintainer operations notes or
+imply support for features that are still deferred.
 
 GitHub Pages deploys the VitePress output from `docs/public/`, using the
 `/socket-store/` project-site base path. Maintainer notes in `docs/project/`
 are outside that VitePress source tree and are not deployed.
-
-Use [`docs/project/README.md`](./project/README.md) as the entry point for
-internal repository notes. If a process or architecture rule becomes durable
-enough to need one accepted source of truth, record that need there and promote
-the rule into a dedicated SPEC instead of duplicating it across multiple
-project-note files.

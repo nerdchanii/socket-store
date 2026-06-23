@@ -29,8 +29,9 @@ Canonical docs:
   `docs/agents/agent-context.json`
 - Agent-facing guide and MCP evaluation note:
   `docs/agents/guide.md`
-- CI and verification troubleshooting:
-  `docs/project/check-failure-playbook.md`
+- Maintainer branch and release operations:
+  `docs/project/branch-policy.md`, `docs/project/release-policy.md`,
+  `docs/project/release-runbook.md`
 
 Public APIs:
 
