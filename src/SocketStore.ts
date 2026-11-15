@@ -1,4 +1,4 @@
-import { MessageHandler } from "./createMessageHandler";
+import type { MessageHandler } from "./createMessageHandler.js";
 import {
   DefaultSchema,
   ISocketStore,
@@ -23,7 +23,7 @@ import {
   UnhandledSocketStoreMessage,
   UnhandledMessageListener,
   Unsubscribe,
-} from "./types";
+} from "./types.js";
 
 type StoreListener = {
   key: string;
