@@ -1,4 +1,4 @@
-import type { MessageHandler } from "./createMessageHandler";
+import type { MessageHandler } from "./createMessageHandler.js";
 
 // ===== Schema-based types =====
 

@@ -1,15 +1,20 @@
 {
   "name": "socket-store",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "it is a websocket store. it makes it easy to use websocket",
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
   "types": "./dist/esm/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/esm/index.d.ts",
-      "import": "./dist/esm/index.js",
-      "require": "./dist/cjs/index.js"
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.ts",
+        "default": "./dist/cjs/index.js"
+      }
     }
   },
   "files": [
@@ -23,7 +28,7 @@
     "changeset:version": "changeset version",
     "dev": "vite",
     "build": "npm run build:esm && npm run build:cjs",
-    "build:esm": "tsc",
+    "build:esm": "tsc && node -e \"require('node:fs').writeFileSync('dist/esm/package.json', JSON.stringify({ type: 'module' }) + '\\n')\"",
     "build:cjs": "tsc --module commonjs --outDir dist/cjs",
     "typecheck": "tsc --noEmit",
     "example:client": "vite examples/basic",
@@ -38,7 +43,7 @@
     "test": "vitest run",
     "lint": "npm run typecheck && npm run example:typecheck && npm run docs:verify-snippets",
     "pack:dry-run": "npm pack --dry-run",
-    "prepack": "npm run typecheck && npm run example:typecheck && npm run type-test && npm run test && npm run build"
+    "prepack": "npm run typecheck && npm run example:typecheck && npm run type-test && npm run test && npm run build && node scripts/verify-package-exports.mjs"
   },
   "repository": {
     "type": "git",

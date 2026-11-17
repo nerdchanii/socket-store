@@ -1,5 +1,11 @@
 # socket-store
 
+## 0.0.4
+
+### Patch Changes
+
+- Fix Node.js ESM imports of `socket-store` while preserving CommonJS support.
+
 ## 0.0.3
 
 ### Patch Changes

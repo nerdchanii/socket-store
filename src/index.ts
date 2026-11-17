@@ -1,7 +1,7 @@
-export { createMessageHandler } from "./createMessageHandler";
-export type { MessageHandler } from "./createMessageHandler";
-export { SocketStore } from "./SocketStore";
-export { SocketStoreError } from "./types";
+export { createMessageHandler } from "./createMessageHandler.js";
+export type { MessageHandler } from "./createMessageHandler.js";
+export { SocketStore } from "./SocketStore.js";
+export { SocketStoreError } from "./types.js";
 export type {
   SocketSchema,
   TopicKey,
@@ -44,4 +44,4 @@ export type {
   ISocketStore,
   ISocketStoreOptions,
   Store,
-} from "./types";
+} from "./types.js";
